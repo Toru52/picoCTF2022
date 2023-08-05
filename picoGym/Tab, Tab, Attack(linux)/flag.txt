@@ -1,0 +1,5 @@
+unzip directory
+↓
+find a fang-of-haynekhtnamet file 
+↓
+strings fang-of-haynekhtnamet | grep pico

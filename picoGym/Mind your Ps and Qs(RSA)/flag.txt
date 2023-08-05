@@ -1,0 +1,9 @@
+https://tech.kusuwada.com/entry/2021/04/08/121120
+
+Factorize n to extract p and q
+↓
+http://factordb.com/index.php?query=1422450808944701344261903748621562998784243662042303391362692043823716783771691667
+↓
+pip install　pycryptodome
+↓
+rsa.py

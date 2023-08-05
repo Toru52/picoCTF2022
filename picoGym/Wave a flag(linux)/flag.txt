@@ -1,0 +1,9 @@
+https://tech.kusuwada.com/entry/2021/04/08/121205
+
+sudo apt install libimage-exiftool-perl
+
+exiftool cat.jpg
+↓
+The lisence statement is bullshit
+↓
+echo "bullshit" | base64 -d

@@ -1,0 +1,12 @@
+https://tech.kusuwada.com/entry/2021/04/08/121205
+
+file dolls.jpg 
+
+1.foremost dolls.jpg 
+
+2.tree output
+
+3.unzip output/zip/00000532.zip 
+
+4. repeat 1→2→3 until find a flag.txt
+

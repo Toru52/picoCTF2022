@@ -1,0 +1,2 @@
+curl --head http://mercury.picoctf.net:15931
+/

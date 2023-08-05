@@ -1,0 +1,7 @@
+https://timesaving.hatenablog.com/entry/2020/12/31/110000
+
+pip install cryptography
+
+python ende.py -d flag.txt.en
+
+Please enter the password:[Use password in pw.txt]
