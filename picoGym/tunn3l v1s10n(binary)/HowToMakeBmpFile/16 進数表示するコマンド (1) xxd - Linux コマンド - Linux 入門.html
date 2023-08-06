@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)https://linux.keicode.com/commands/hex-dump.php -->
+<html lang="ja"><script src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(5).txt"></script><script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/get_counts"></script><iframe id="pxcelframe" title="pxcelframe" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/t_.html" style="display: none;"></iframe><script src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(6).txt"></script><script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/60d5a2690081ca00124781b7.js.download"></script><script src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(7).txt" id="google_shimpl"></script><script type="text/javascript" async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ga.js.download"></script><script>
+    window[Symbol.for('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')] = new (class PostClient {
+    constructor(name, destination) {
+        this.name = name;
+        this.destination = destination;
+        this.serverListeners = {};
+        this.bgRequestsListeners = {};
+        this.bgEventsListeners = {};
+        window.addEventListener('message', (message) => {
+            const data = message.data;
+            const isNotForMe = !(data.destination && data.destination === this.name);
+            const hasNotEventProp = !data.event;
+            if (isNotForMe || hasNotEventProp) {
+                return;
+            }
+            if (data.event === 'MARIO_POST_SERVER__BG_RESPONSE') {
+                const response = data.args;
+                if (this.hasBgRequestListener(response.requestId)) {
+                    try {
+                        this.bgRequestsListeners[response.requestId](response.response);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                    delete this.bgRequestsListeners[response.requestId];
+                }
+            }
+            else if (data.event === 'MARIO_POST_SERVER__BG_EVENT') {
+                const response = data.args;
+                if (this.hasBgEventListener(response.event)) {
+                    try {
+                        this.bgEventsListeners[data.id](response.payload);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }
+            }
+            else if (this.hasServerListener(data.event)) {
+                try {
+                    this.serverListeners[data.event](data.args);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }
+            else {
+                console.log(`event not handled: ${data.event}`);
+            }
+        });
+    }
+    emitToServer(event, args) {
+        const id = this.generateUIID();
+        const message = {
+            args,
+            destination: this.destination,
+            event,
+            id,
+        };
+        window.postMessage(message, location.origin);
+        return id;
+    }
+    emitToBg(bgEventName, args) {
+        const requestId = this.generateUIID();
+        const request = { bgEventName, requestId, args };
+        this.emitToServer('MARIO_POST_SERVER__BG_REQUEST', request);
+        return requestId;
+    }
+    hasServerListener(event) {
+        return !!this.serverListeners[event];
+    }
+    hasBgRequestListener(requestId) {
+        return !!this.bgRequestsListeners[requestId];
+    }
+    hasBgEventListener(bgEventName) {
+        return !!this.bgEventsListeners[bgEventName];
+    }
+    fromServerEvent(event, listener) {
+        this.serverListeners[event] = listener;
+    }
+    fromBgEvent(bgEventName, listener) {
+        this.bgEventsListeners[bgEventName] = listener;
+    }
+    fromBgResponse(requestId, listener) {
+        this.bgRequestsListeners[requestId] = listener;
+    }
+    generateUIID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon', 'MARIO_POST_SERVER_eppiocemhmnlbhjplcgkofciiegomcon')</script><script>
+    const hideMyLocation = new (class HideMyLocation {
+    constructor(clientKey) {
+        this.clientKey = clientKey;
+        this.watchIDs = {};
+        this.client = window[Symbol.for(clientKey)];
+        const getCurrentPosition = navigator.geolocation.getCurrentPosition;
+        const watchPosition = navigator.geolocation.watchPosition;
+        const clearWatch = navigator.geolocation.clearWatch;
+        const self = this;
+        navigator.geolocation.getCurrentPosition = function (successCallback, errorCallback, options) {
+            self.handle(getCurrentPosition, 'GET', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.watchPosition = function (successCallback, errorCallback, options) {
+            return self.handle(watchPosition, 'WATCH', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.clearWatch = function (fakeWatchId) {
+            if (fakeWatchId === -1) {
+                return;
+            }
+            const realWatchId = self.watchIDs[fakeWatchId];
+            delete self.watchIDs[fakeWatchId];
+            return clearWatch.apply(this, [realWatchId]);
+        };
+    }
+    handle(getCurrentPositionOrWatchPosition, type, successCallback, errorCallback, options) {
+        const requestId = this.client.emitToBg('HIDE_MY_LOCATION__GET_LOCATION');
+        let fakeWatchId = this.getRandomInt(0, 100000);
+        this.client.fromBgResponse(requestId, (response) => {
+            if (response.enabled) {
+                if (response.status === 'SUCCESS') {
+                    const position = this.map(response);
+                    successCallback(position);
+                }
+                else {
+                    const error = this.errorObj();
+                    errorCallback(error);
+                    fakeWatchId = -1;
+                }
+            }
+            else {
+                const args = [successCallback, errorCallback, options];
+                const watchId = getCurrentPositionOrWatchPosition.apply(navigator.geolocation, args);
+                if (type === 'WATCH') {
+                    this.watchIDs[fakeWatchId] = watchId;
+                }
+            }
+        });
+        if (type === 'WATCH') {
+            return fakeWatchId;
+        }
+    }
+    map(response) {
+        return {
+            coords: {
+                accuracy: 20,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                latitude: response.latitude,
+                longitude: response.longitude,
+                speed: null,
+            },
+            timestamp: Date.now(),
+        };
+    }
+    errorObj() {
+        return {
+            code: 1,
+            message: 'User denied Geolocation',
+        };
+    }
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')
+  </script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<link rel="dns-prefetch" href="https://encrypted-tbn1.gstatic.com/">
+<link rel="dns-prefetch" href="https://googleads.g.doubleclick.net/">
+<link rel="dns-prefetch" href="https://www.gstatic.com/">
+<link rel="dns-prefetch" href="https://www.facebook.com/">
+<link rel="dns-prefetch" href="https://www.google.com/">
+<link rel="dns-prefetch" href="https://ad.doubleclick.net/">
+<link rel="dns-prefetch" href="https://connect.facebook.net/">
+<link rel="dns-prefetch" href="https://pagead2.googlesyndication.com/">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="canonical" href="https://linux.keicode.com/commands/hex-dump.php">
+<title>16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門</title>
+<meta name="description" content="今まで Windows を使っていたけど、リナックスを使いはじめたいという人のための簡単なリナックス入門です。">
+<link rel="stylesheet" href="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+<link rel="stylesheet" href="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/style-2021c.css">
+<link rel="stylesheet" href="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/prism.css">
+<link rel="stylesheet" href="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/pyg.css">
+<link rel="shortcut icon" href="https://www.keicode.com/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="https://www.keicode.com/img/keicode-logo-180x180.png">
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-5502870-12']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script><script ecommerce-type="extend-native-history-api">(() => {
+            const nativePushState = history.pushState;
+            const nativeReplaceState = history.replaceState;
+            const nativeBack = history.back;
+            const nativeForward = history.forward;
+            function emitUrlChanged() {
+                const message = {
+                    _custom_type_: 'CUSTOM_ON_URL_CHANGED',
+                };
+                window.postMessage(message);
+            }
+            history.pushState = function () {
+                nativePushState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.replaceState = function () {
+                nativeReplaceState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.back = function () {
+                nativeBack.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.forward = function () {
+                nativeForward.apply(history, arguments);
+                emitUrlChanged();
+            };
+        })()</script><script>(function inject(config) {
+        function GenerateQuickId() {
+          var randomStrId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          return randomStrId.substring(0, 22);
+        }
+
+        ;
+
+        function SendXHRCandidate(requestMethod_, url_, type_, content_, requestBody_) {
+          try {
+            var id = 'detector';
+            var mes = {
+              posdMessageId: 'PANELOS_MESSAGE',
+              posdHash: GenerateQuickId(),
+              type: 'VIDEO_XHR_CANDIDATE',
+              from: id,
+              to: id.substring(0, id.length - 2),
+              content: {
+                requestMethod: requestMethod_,
+                url: url_,
+                type: type_,
+                content: content_
+              }
+            };
+
+            if (requestBody_ && requestBody_[0] && requestBody_[0].length) {
+              mes.content.encodedPostBody = requestBody_[0];
+            } // console.log(`posd_log: ${new Date().toLocaleString()} DEBUG [${this.id}] : (PosdVideoTrafficDetector) sending`, mes);
+
+
+            window.postMessage(mes);
+          } catch (e) {}
+        }
+
+        ;
+        var open = XMLHttpRequest.prototype.open;
+
+        XMLHttpRequest.prototype.open = function () {
+          this.requestMethod = arguments[0];
+          open.apply(this, arguments);
+        };
+
+        var send = XMLHttpRequest.prototype.send;
+
+        XMLHttpRequest.prototype.send = function () {
+          var requestBody_ = Object.assign(arguments, {});
+          var onreadystatechange = this.onreadystatechange;
+
+          this.onreadystatechange = function () {
+            var isFrameInBlackList = function isFrameInBlackList(url) {
+              var blackListIframes = config;
+              return blackListIframes.some(function (e) {
+                return url.includes(e);
+              });
+            };
+
+            if (this.readyState === 4 && !isFrameInBlackList(this.responseURL)) {
+              setTimeout(SendXHRCandidate(this.requestMethod, this.responseURL, this.getResponseHeader('content-type'), this.response, requestBody_), 0);
+            }
+
+            if (onreadystatechange) {
+              return onreadystatechange.apply(this, arguments);
+            }
+          };
+
+          return send.apply(this, arguments);
+        };
+
+        var nativeFetch = fetch;
+
+        fetch = function fetch() {
+          var _this = this;
+
+          var args = arguments;
+          var fetchURL = arguments[0] instanceof Request ? arguments[0].url : arguments[0];
+          var fetchMethod = arguments[0] instanceof Request ? arguments[0].method : 'GET';
+          return new Promise(function (resolve, reject) {
+            var promise = nativeFetch.apply(_this, args);
+            promise.then(function (response) {
+              if (response.body instanceof ReadableStream) {
+                var nativeJson = response.json;
+
+                response.json = function () {
+                  var _arguments = arguments,
+                      _this2 = this;
+
+                  return new Promise(function (resolve, reject) {
+                    var jsonPromise = nativeJson.apply(_this2, _arguments);
+                    jsonPromise.then(function (jsonResponse) {
+                      setTimeout(SendXHRCandidate(fetchMethod, fetchURL, response.headers.get('content-type'), JSON.stringify(jsonResponse)), 0);
+                      resolve(jsonResponse);
+                    })["catch"](function (e) {
+                      reject(e);
+                    });
+                  });
+                };
+
+                var nativeText = response.text;
+
+                response.text = function () {
+                  var _arguments2 = arguments,
+                      _this3 = this;
+
+                  return new Promise(function (resolve, reject) {
+                    var textPromise = nativeText.apply(_this3, _arguments2);
+                    textPromise.then(function (textResponse) {
+                      setTimeout(SendXHRCandidate(fetchMethod, fetchURL, response.headers.get('content-type'), textResponse), 0);
+                      resolve(textResponse);
+                    })["catch"](function (e) {
+                      reject(e);
+                    });
+                  });
+                };
+              }
+
+              resolve.apply(this, arguments);
+            })["catch"](function () {
+              reject.apply(this, arguments);
+            });
+          });
+        };
+      })(["facebook.com/","twitter.com/","youtube-nocookie.com/embed/","//vk.com/","//www.vk.com/","//linkedin.com/","//www.linkedin.com/","//instagram.com/","//www.instagram.com/","//www.google.com/recaptcha/api2/","//hangouts.google.com/webchat/","//www.google.com/calendar/","//www.google.com/maps/embed","spotify.com/","soundcloud.com/","//player.vimeo.com/","//disqus.com/","//tgwidget.com/","//js.driftt.com/","friends2follow.com","/widget","login","//video.bigmir.net/","blogger.com","//smartlock.google.com/","//keep.google.com/","/web.tolstoycomments.com/","moz-extension://","chrome-extension://","/auth/","//analytics.google.com/","adclarity.com","paddle.com/checkout","hcaptcha.com","recaptcha.net","2captcha.com","accounts.google.com","www.google.com/shopping/customerreviews","buy.tinypass.com","gstatic.com","secureir.ebaystatic.com","docs.google.com","contacts.google.com","github.com","mail.google.com","chat.google.com"]);</script>
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="16 進数表示するコマンド (1) xxd - Linux 入門">
+<meta name="twitter:description" content="今まで Windows を使っていたけど、リナックスを使いはじめたいという人のための簡単なリナックス入門です。">
+<meta name="twitter:image" content="https://linux.keicode.com/img/og-image-1.png">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://linux.keicode.com/commands/hex-dump.php">
+<meta property="og:title" content="16 進数表示するコマンド (1) xxd - Linux 入門">
+<meta property="og:site_name" content="Linux 入門">
+<meta property="og:description" content="今まで Windows を使っていたけど、リナックスを使いはじめたいという人のための簡単なリナックス入門です。">
+<meta property="og:image" content="https://linux.keicode.com/img/og-image-1.png">
+<script type="text/javascript" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/sharethis.js.download" async="async"></script>
+<style>
+.ad-slot {
+	margin-top:1em;
+	margin-bottom:1em;
+}
+.ad-slot-dp { min-height: 360px; }
+.ad-slot-ia { min-height: 174px; }
+.ad-slot-mc { min-height: 396px; }
+@media(max-width:992px) {
+	.ad-slot-dp { min-height: 360px; }
+	.ad-slot-ia { min-height: 150px; }
+	.ad-slot-mc { min-height: 313px; }
+}
+</style>
+<meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><style type="text/css">#st-1 {
+  font-family: "Helvetica Neue", Verdana, Helvetica, Arial, sans-serif;;
+  direction: ltr;
+  display: block;
+  opacity: 1;
+  text-align: center;
+  z-index: 94034;
+}
+#st-1.st-animated {
+  -moz-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; -ms-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; -o-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; -webkit-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in;
+}
+#st-1.st-hidden {
+  opacity: 0;
+}
+
+#st-1.st-preview {
+  display: none!important;
+  opacity: 0!important;
+}
+#st-1.st-hide {
+  display: none;
+}
+#st-1 .st-btn {
+  -moz-box-sizing: border-box;
+-webkit-box-sizing: border-box;
+box-sizing: border-box;
+  -moz-transition: opacity 0.2s ease-in, top 0.2s ease-in; -ms-transition: opacity 0.2s ease-in, top 0.2s ease-in; -o-transition: opacity 0.2s ease-in, top 0.2s ease-in; -webkit-transition: opacity 0.2s ease-in, top 0.2s ease-in; transition: opacity 0.2s ease-in, top 0.2s ease-in;
+  -moz-border-radius: 4px;
+-webkit-border-radius: 4px;
+border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 12px;
+  height: 32px;
+  line-height: 32px;
+  margin-right: 8px;
+  padding: 0 10px;
+  position: relative;
+  text-align: center;
+  top: 0;
+  vertical-align: top;
+  white-space: nowrap;
+}
+#st-1 .st-btn:last-child {
+  margin-right: 0;
+}
+#st-1 .st-btn > svg {
+  height: 16px;
+  width: 16px;
+  position: relative;
+  top: 8px;
+  vertical-align: top;
+}
+#st-1 .st-btn > img {
+  display: inline-block;
+  height: 16px;
+  width: 16px;
+  position: relative;
+  top: 8px;
+  vertical-align: top;
+}
+#st-1 .st-btn > span {
+  -moz-transition: all 0.2s ease-in; -ms-transition: all 0.2s ease-in; -o-transition: all 0.2s ease-in; -webkit-transition: all 0.2s ease-in; transition: all 0.2s ease-in;
+  color: #fff;
+  display: inline-block;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  min-width: 60px;
+  opacity: 1;
+  padding: 0 6px;
+  position: relative;
+  vertical-align: top;
+}
+#st-1.st-has-labels .st-btn {
+  min-width: 120px;
+}
+#st-1.st-has-labels .st-btn.st-remove-label {
+  min-width: 50px;
+}
+#st-1.st-has-labels .st-btn.st-remove-label > span {
+  display: none;
+}
+#st-1.st-has-labels .st-btn.st-hide-label > span {
+  display: none;
+}
+#st-1 .st-total {
+  color: #555;
+  display: inline-block;
+  font-weight: 500;
+  line-height: 12px;
+  margin-right: 0;
+  max-width: 80px;
+  padding: 4px 8px;
+  text-align: center;
+}
+#st-1 .st-total.st-hidden {
+  display: none;
+}
+#st-1 .st-total > span {
+  font-size: 16px;
+  line-height: 17px;
+  display: block;
+  padding: 0;
+}
+#st-1 .st-total > span.st-shares {
+  font-size: 9px;
+  line-height: 9px;
+}
+#st-1.st-justified {
+  display: flex;
+  text-align: center;
+}
+#st-1.st-justified .st-btn {
+  -moz-flex: 1;
+-ms-flex: 1;
+-webkit-flex: 1;
+flex: 1;
+}#st-1 .st-btn:hover {
+  opacity: .8;
+  top: -4px;
+}#st-1 .st-btn[data-network='facebook'] {
+  background-color: #4267B2
+}
+#st-1 .st-btn[data-network='facebook'] img {
+  filter: 
+}
+#st-1 .st-btn[data-network='facebook'] > span {
+  color: #fff
+}
+#st-1 .st-btn[data-network='twitter'] {
+  background-color: #55acee
+}
+#st-1 .st-btn[data-network='twitter'] img {
+  filter: 
+}
+#st-1 .st-btn[data-network='twitter'] > span {
+  color: #fff
+}
+#st-1 .st-btn[data-network='pinterest'] {
+  background-color: #CB2027
+}
+#st-1 .st-btn[data-network='pinterest'] img {
+  filter: 
+}
+#st-1 .st-btn[data-network='pinterest'] > span {
+  color: #fff
+}
+#st-1 .st-btn[data-network='email'] {
+  background-color: #7d7d7d
+}
+#st-1 .st-btn[data-network='email'] img {
+  filter: 
+}
+#st-1 .st-btn[data-network='email'] > span {
+  color: #fff
+}
+#st-1 .st-btn[data-network='sms'] {
+  background-color: #ffbd00
+}
+#st-1 .st-btn[data-network='sms'] img {
+  filter: 
+}
+#st-1 .st-btn[data-network='sms'] > span {
+  color: #fff
+}
+#st-1 .st-btn[data-network='sharethis'] {
+  background-color: #95D03A
+}
+#st-1 .st-btn[data-network='sharethis'] img {
+  filter: 
+}
+#st-1 .st-btn[data-network='sharethis'] > span {
+  color: #fff
+}#st-1 .st-btn[data-network='snapchat'] > span {
+  color: #333};
+}</style></head>
+<body bis_register="W3sibWFzdGVyIjp0cnVlLCJleHRlbnNpb25JZCI6ImVwcGlvY2VtaG1ubGJoanBsY2drb2ZjaWllZ29tY29uIiwiYWRibG9ja2VyU3RhdHVzIjp7IkRJU1BMQVkiOiJkaXNhYmxlZCIsIkZBQ0VCT09LIjoiZGlzYWJsZWQiLCJUV0lUVEVSIjoiZGlzYWJsZWQiLCJSRURESVQiOiJkaXNhYmxlZCJ9LCJ2ZXJzaW9uIjoiMS45LjEwIiwic2NvcmUiOjEwOTEwfV0=" data-new-gr-c-s-check-loaded="14.1117.0" data-gr-ext-installed="" aria-hidden="false" style="padding: 75px 0px 154px;">
+<nav class="navbar navbar-expand-lg fixed-top navbar-light bg-light">
+	<a class="navbar-brand" href="https://linux.keicode.com/">
+		<img src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/keicode-2020-48x48.png" alt="" width="24" height="24" style="margin-right:10px;">
+		Linux 入門	</a>
+	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+		<span class="navbar-toggler-icon"></span>
+	</button>
+	<div class="collapse navbar-collapse" id="navbarContent" bis_skin_checked="1">
+		<ul class="navbar-nav">
+		<li class="nav-item"><a class="nav-link" href="https://linux.keicode.com/commands/">Linux コマンド</a></li>
+		<li class="nav-item"><a class="nav-link" href="https://linux.keicode.com/linux/">Linux の設定</a></li>
+		<li class="nav-item"><a class="nav-link" href="https://linux.keicode.com/servers/">各種サーバーの設定</a></li>
+		</ul>
+	</div>
+</nav>
+<div class="container-fluid" style="height: auto !important;" bis_skin_checked="1">
+	<div class="row" style="height: auto !important;" bis_skin_checked="1">
+		<div class="col-md-8 lcol" style="height: auto !important;" bis_skin_checked="1">	
+		<main style="height: auto !important;">
+	<div bis_skin_checked="1"><nav aria-label="breadcrumb" itemscope="" itemtype="https://schema.org/BreadcrumbList"><ol class="breadcrumb" style="background:white;"><li class="breadcrumb-item"><span itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem"><i class="fa fa-home"></i> <a href="https://linux.keicode.com/" itemtype="https://schema.org/Thing" itemprop="item"><span itemprop="name">ホーム</span></a><meta itemprop="position" content="1"></span></li><li class="breadcrumb-item"><span itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem"><a href="https://linux.keicode.com/commands/" itemtype="https://schema.org/Thing" itemprop="item"><span itemprop="name">Linux コマンド</span></a><meta itemprop="position" content="2"></span></li></ol></nav></div>
+	<h1>16 進数表示するコマンド (1) xxd</h1>
+<div class="ad-slot ad-slot-dp" style="height: auto !important; min-height: 0px !important;" bis_skin_checked="1">
+<script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(8).txt"></script>
+<!-- KEICODE-DP-HDR -->
+<ins class="adsbygoogle" style="display: block; height: 280px;" data-ad-client="ca-pub-8779264364679147" data-ad-slot="6232474812" data-ad-format="auto" data-full-width-responsive="true" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_0_host" style="border: none; height: 280px; width: 954px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: visible;" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1"><iframe id="aswift_0" name="aswift_0" style="left:0;position:absolute;top:0;border:0;width:954px;height:280px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="954" height="280" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads.html" data-google-container-id="a!1" data-google-query-id="CKrx3e78xoADFdyQ6QUd0KoN3Q" bis_size="{&quot;x&quot;:44,&quot;y&quot;:220,&quot;w&quot;:954,&quot;h&quot;:280,&quot;abs_x&quot;:44,&quot;abs_y&quot;:220}" bis_id="fr_75qeca552woso2jvq6iaxi" bis_depth="0" bis_chainid="6" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div><p>ここではバイト列を 16 進数で表示する方法を紹介します。</p>
+<p>16 進数によってバイト列を表示するのは、<strong class="green">16 進ダンプ</strong>とか<strong class="green">ヘックスダンプ</strong>などと呼ばれます。</p>
+
+<div class="note" bis_skin_checked="1">
+<p><span class="command">hexdump</span> コマンドについては「<a href="https://linux.keicode.com/commands/hex-dump-with-hexdump.php">16 進数表示するコマンド (2) hexdump</a>」をみてください。</p>
+</div>
+
+
+<h3>ヘックスダンプの動機</h3>
+<p>ヘックスダンプすると、何か問題が起きたときに調査するのに役に立つ場合があります。</p>
+
+<p>例えば、文字化けしているときに、テキストエディタで開いてもゴチャゴチャの文字が表示されるだけですが、
+16 進数でデータを表示することで、どんなデータが並んでいるかわかり、どんな理由で文字化けしているのかわかる場合があります。</p>
+<p>その他、テキストエディタで開いてもみえないゴミデータ (無駄・予期せぬデータ) が混ざっていたりすることでファイルが読み込めない場合に何が起きているのか確認するのに役に立つ、などです。</p>
+
+
+<div class="ad-slot ad-slot-ia" bis_skin_checked="1">
+<script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(8).txt"></script>
+<ins class="adsbygoogle" style="display: block; text-align: center; height: 200px;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-8779264364679147" data-ad-slot="6284445708" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_1_host" style="border: none; height: 200px; width: 954px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1"><iframe id="aswift_1" name="aswift_1" style="left:0;position:absolute;top:0;border:0;width:954px;height:200px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="954" height="200" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads(1).html" data-google-container-id="a!2" data-google-query-id="CPyI3u78xoADFU6P6QUdsnwCRg" bis_size="{&quot;x&quot;:44,&quot;y&quot;:950,&quot;w&quot;:954,&quot;h&quot;:200,&quot;abs_x&quot;:44,&quot;abs_y&quot;:950}" bis_id="fr_koswagnineh74qdgpz13f2" bis_depth="0" bis_chainid="5" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+
+<h3><span class="command">xxd</span> コマンドによる HEX ダンプ</h3>
+
+<p>ヘックスダンプをするためのコマンドとして、 <span class="command">xxd</span> コマンドがあります。</p>
+
+<p>実際にコマンドを実行してみましょう。</p>
+<p>次のようなテキストファイル <span class="code">a.txt</span> があるとします。</p>
+<pre class="code">ABCDEFGHIJKLMNOPQRSTUVWXYZ
+</pre>
+<p><span class="command">xxd</span> コマンドに、ファイル名を渡すと次のようにファイルの中身をヘックスダンプします。</p>
+<pre class="command"><strong>$ xxd a.txt</strong>
+00000000: 4142 4344 4546 4748 494a 4b4c 4d4e 4f50  ABCDEFGHIJKLMNOP
+00000010: 5152 5354 5556 5758 595a 0a              QRSTUVWXYZ.</pre>
+
+<p>標準入力からも入力を受けとるので、次のようにパイプでデータを送ることもできます。</p>
+
+<pre class="command"><strong>$ echo ABC | xxd</strong>
+00000000: 4142 430a                                ABC.</pre>
+
+<p>デフォルトで 1 行に 16 バイト分、 16 進数表示と  ASCII 文字表示をします。</p>
+<p>16 進数を大文字表示する場合は <span class="option">-u</span> オプションを指定します。</p>
+
+<pre class="command"><strong>$ xxd -u a.txt</strong>
+00000000: 4142 4344 4546 4748 494A 4B4C 4D4E 4F50  ABCDEFGHIJKLMNOP
+00000010: 5152 5354 5556 5758 595A 0A              QRSTUVWXYZ.</pre>
+
+<p>上のコマンド結果でわかるように、2 バイト毎グループ化して 16 進数ダンプしています。これを例えば 4 バイト毎にグループ化するには
+ <span class="option">-g</span> オプションに続けてグループ化するバイト数 <span class="param">4</span> を指定します。</p>
+
+<pre class="command"><strong>$ xxd -u -g 4 a.txt</strong>
+00000000: 41424344 45464748 494A4B4C 4D4E4F50  ABCDEFGHIJKLMNOP
+00000010: 51525354 55565758 595A0A             QRSTUVWXYZ.
+</pre>
+
+<p>さらにグループ化された 16 進数のバイトオーダーをリトルエンディアンで表示するには、<span class="option">-e</span> オプションを指定します。</p>
+
+<pre class="command"><strong>$ xxd -u -g 4 -e a.txt</strong>
+00000000: 44434241 48474645 4C4B4A49 504F4E4D  ABCDEFGHIJKLMNOP
+00000010: 54535251 58575655   0A5A59           QRSTUVWXYZ.</pre>
+
+<div class="note" bis_skin_checked="1">
+<p>リトルエンディアンなどのバイトオーダーについては、当サイトの姉妹サイト <a href="http://c.keicode.com/">C 言語入門</a> の「<a href="http://c.keicode.com/lang/byte-order.php">バイトオーダー</a>」をみてください。</p>
+</div>
+
+
+
+
+</main>
+<div class="ad-slot ad-slot-dp" style="height: auto !important; min-height: 0px !important;" bis_skin_checked="1">
+<script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(8).txt"></script>
+<!-- KEICODE-DP-FTR -->
+<ins class="adsbygoogle" style="display: block; height: 350px;" data-ad-client="ca-pub-8779264364679147" data-ad-slot="6905400412" data-ad-format="auto" data-full-width-responsive="true" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_2_host" style="border: none; height: 350px; width: 954px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: hidden;" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1"><iframe id="aswift_2" name="aswift_2" style="left: 0px; position: absolute; top: 0px; border: 0px; width: 954px; height: 350px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="954" height="350" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads(2).html" data-google-container-id="a!3" data-google-query-id="COrW3e78xoADFYvLfAod0tcJTA" bis_size="{&quot;x&quot;:44,&quot;y&quot;:2299,&quot;w&quot;:954,&quot;h&quot;:350,&quot;abs_x&quot;:44,&quot;abs_y&quot;:2299}" bis_id="fr_u1drtly5rgq6ffvkshcuqs" bis_depth="0" bis_chainid="1" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div><div class="ad-slot ad-slot-mc" bis_skin_checked="1">
+<script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(8).txt"></script>
+<ins class="adsbygoogle" style="display: block; height: 477px;" data-ad-format="autorelaxed" data-ad-client="ca-pub-8779264364679147" data-ad-slot="2153629005" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_3_host" style="border: none; height: 477px; width: 954px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1"><iframe id="aswift_3" name="aswift_3" style="left:0;position:absolute;top:0;border:0;width:954px;height:477px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="954" height="477" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads(3).html" data-google-container-id="a!4" bis_size="{&quot;x&quot;:44,&quot;y&quot;:2667,&quot;w&quot;:954,&quot;h&quot;:477,&quot;abs_x&quot;:44,&quot;abs_y&quot;:2667}" bis_id="fr_kuguhmvpxit8c7mck5z8tu" bis_depth="0" bis_chainid="2" data-google-query-id="CNXy3e78xoADFQWV6QUdT-cAhA" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div><div style="margin-top:1em; margin-bottom:1em;" bis_skin_checked="1">
+<p>ここまでお読みいただき、誠にありがとうございます。SNS 等でこの記事をシェアしていただけますと、大変励みになります。どうぞよろしくお願いします。</p>
+<!-- ShareThis BEGIN -->
+<div class="sharethis-inline-share-buttons st-center st-has-labels  st-inline-share-buttons st-animated" bis_skin_checked="1" id="st-1"><div class="st-total st-hidden" bis_skin_checked="1">
+  <span class="st-label"></span>
+  <span class="st-shares">
+    Shares
+  </span>
+</div><div class="st-btn st-first" data-network="facebook" bis_skin_checked="1" style="display: inline-block;">
+  <img alt="facebook sharing button" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/facebook.svg">
+  <span class="st-label">Share</span>
+</div><div class="st-btn" data-network="twitter" bis_skin_checked="1" style="display: inline-block;">
+  <img alt="twitter sharing button" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/twitter.svg">
+  <span class="st-label">Tweet</span>
+</div><div class="st-btn" data-network="pinterest" bis_skin_checked="1" style="display: inline-block;">
+  <img alt="pinterest sharing button" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/pinterest.svg">
+  <span class="st-label">Pin</span>
+</div><div class="st-btn" data-network="email" bis_skin_checked="1" style="display: inline-block;">
+  <img alt="email sharing button" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/email.svg">
+  <span class="st-label">Email</span>
+</div><div class="st-btn st-last" data-network="sharethis" bis_skin_checked="1" style="display: inline-block;">
+  <img alt="sharethis sharing button" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/sharethis.svg">
+  <span class="st-label">Share</span>
+</div></div>
+<!-- ShareThis END -->
+</div>
+
+<div style="margin-top:1em; margin-bottom:1em;" bis_skin_checked="1"></div>
+<nav aria-label="breadcrumb" itemscope="" itemtype="https://schema.org/BreadcrumbList"><ol class="breadcrumb" style="background:white;"><li class="breadcrumb-item"><span itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem"><i class="fa fa-home"></i> <a href="https://linux.keicode.com/" itemtype="https://schema.org/Thing" itemprop="item"><span itemprop="name">ホーム</span></a><meta itemprop="position" content="1"></span></li><li class="breadcrumb-item"><span itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem"><a href="https://linux.keicode.com/commands/" itemtype="https://schema.org/Thing" itemprop="item"><span itemprop="name">Linux コマンド</span></a><meta itemprop="position" content="2"></span></li></ol></nav>
+</div><div class="col-md-4 rcol" style="padding-top: 1em; height: auto !important;" bis_skin_checked="1">
+<aside>
+<div bis_skin_checked="1">
+<div class="ad-slot ad-slot-dp-sb" bis_skin_checked="1">
+<script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(8).txt"></script>
+<!-- KEICODE-DP-SB -->
+<ins class="adsbygoogle" style="display: block; height: 280px;" data-ad-client="ca-pub-8779264364679147" data-ad-slot="9597004750" data-ad-format="auto" data-full-width-responsive="true" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_4_host" style="border: none; height: 280px; width: 476px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: visible;" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1"><iframe id="aswift_4" name="aswift_4" style="left:0;position:absolute;top:0;border:0;width:476px;height:280px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="476" height="280" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads(4).html" data-google-container-id="a!5" data-google-query-id="CKrq3e78xoADFQ6L6QUdKFUBDQ" bis_size="{&quot;x&quot;:1028,&quot;y&quot;:110,&quot;w&quot;:476,&quot;h&quot;:280,&quot;abs_x&quot;:1028,&quot;abs_y&quot;:110}" bis_id="fr_97kdg34gbdminuyjey3mqg" bis_depth="0" bis_chainid="3" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div></div>
+</aside>
+
+<aside style="height: auto !important;">
+<div class="menu" style="height: auto !important;" bis_skin_checked="1">
+<h3><a href="https://linux.keicode.com/linux/" class="hdr">Linux のインストール・設定</a></h3>
+<ul>
+<li><a href="https://linux.keicode.com/linux/install.php">インストール</a></li>
+<li><a href="https://linux.keicode.com/linux/settings.php">各種設定</a></li>
+<li><a href="https://linux.keicode.com/commands/">Linux コマンド</a></li>
+</ul>
+
+
+<h3><a href="https://linux.keicode.com/servers/" class="hdr">各種サーバーの設定</a></h3>
+<ul>
+<li><a href="https://linux.keicode.com/servers/lamp.php">LAMP</a></li>
+<li><a href="https://linux.keicode.com/servers/apache.php">Apache</a></li>
+<li><a href="https://linux.keicode.com/servers/mysql.php">MySQL</a></li>
+</ul>
+
+<h3><a href="https://linux.keicode.com/prog/" class="hdr">プログラミング</a></h3>
+<ul>
+<li><a href="https://linux.keicode.com/prog/dev.php">各種開発環境の設定</a></li>
+<li><a href="https://linux.keicode.com/prog/git.php">Git - 分散型バージョン管理</a></li>
+</ul>
+
+<h3><a href="https://linux.keicode.com/tools/" class="hdr">Linux ソフトウェア</a></h3>
+<ul>
+<li><a href="https://linux.keicode.com/tools/network.php">ネットワーク</a></li>
+<li><a href="https://linux.keicode.com/tools/virtualbox.php">仮想化ソフト - VirtualBox</a></li>
+
+<!-- <li><a href='../tools/multimedia.php' >マルチメディア</a></li>-->
+</ul>
+
+<div bis_skin_checked="1">
+<div class="ad-slot ad-slot-dp-sb" bis_skin_checked="1">
+<script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(8).txt"></script>
+<!-- KEICODE-DP-SB -->
+<ins class="adsbygoogle" style="display: block; height: 280px;" data-ad-client="ca-pub-8779264364679147" data-ad-slot="9597004750" data-ad-format="auto" data-full-width-responsive="true" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_5_host" style="border: none; height: 280px; width: 476px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: visible;" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1"><iframe id="aswift_5" name="aswift_5" style="left:0;position:absolute;top:0;border:0;width:476px;height:280px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="476" height="280" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads(5).html" data-google-container-id="a!6" data-google-query-id="CNX33e78xoADFYIcvQod8jQM-g" bis_size="{&quot;x&quot;:1028,&quot;y&quot;:897,&quot;w&quot;:476,&quot;h&quot;:280,&quot;abs_x&quot;:1028,&quot;abs_y&quot;:897}" bis_id="fr_8g20tuhhnpof6objpyt5as" bis_depth="0" bis_chainid="7" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div></div>
+<div style="margin-top: 1rem;" bis_skin_checked="1">
+<div class="ad-slot ad-slot-dp-sb" bis_skin_checked="1">
+<script async="" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/f(8).txt"></script>
+<!-- KEICODE-DP-SB -->
+<ins class="adsbygoogle" style="display: block; height: 280px;" data-ad-client="ca-pub-8779264364679147" data-ad-slot="9597004750" data-ad-format="auto" data-full-width-responsive="true" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_6_host" style="border: none; height: 280px; width: 476px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: visible;" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1"><iframe id="aswift_6" name="aswift_6" style="left:0;position:absolute;top:0;border:0;width:476px;height:280px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="476" height="280" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads(6).html" data-google-container-id="a!7" data-google-query-id="COva3e78xoADFcXSvQodEfcCJw" bis_size="{&quot;x&quot;:1028,&quot;y&quot;:1194,&quot;w&quot;:476,&quot;h&quot;:280,&quot;abs_x&quot;:1028,&quot;abs_y&quot;:1194}" bis_id="fr_5e3v0p8mz9sllz6oizkx1l" bis_depth="0" bis_chainid="4" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div></div>
+
+
+
+</div></aside>
+	</div>
+</div><div class="container-fluid" bis_skin_checked="1">
+<footer>
+	<span class="footer-label">© 2023 Linux 入門</span>
+</footer>
+</div>
+<link rel="stylesheet" href="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/font-awesome.min.css">
+<script src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/jquery-3.5.1.slim.min.js.download" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/bootstrap.bundle.min.js.download" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+<script src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/main.js.download"></script>
+<script src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/prism.js.download"></script>
+
+
+</div><ins class="adsbygoogle adsbygoogle-noablate" data-adsbygoogle-status="done" style="display: none !important;" data-ad-status="unfilled"><div id="aswift_7_host" tabindex="0" title="Advertisement" aria-label="Advertisement" style="border: none; height: 0px; width: 0px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;" bis_skin_checked="1"><iframe id="aswift_7" name="aswift_7" style="left:0;position:absolute;top:0;border:0;width:undefinedpx;height:undefinedpx;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/ads(7).html" data-google-container-id="a!8" data-load-complete="true"></iframe></div></ins><deepl-input-controller><template shadowrootmode="open"><link rel="stylesheet" href="chrome-extension://cofdbpoegempjloogbagkncekinflcnj/build/content.css"><div><div class="dl-input-translation-container svelte-ju4595"><div></div></div></div></template></deepl-input-controller><ins class="adsbygoogle adsbygoogle-noablate" data-adsbygoogle-status="done" data-anchor-status="displayed" style="display: block; width: 100% !important; height: 129px !important; bottom: 0px; clear: none !important; float: none !important; left: 0px; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1; overflow: visible !important; padding: 0px !important; position: fixed; right: auto !important; top: auto !important; vertical-align: baseline !important; visibility: visible !important; z-index: 2147483647; background: rgb(250, 250, 250) !important;" data-ad-status="filled" data-anchor-shown="true"><div class="grippy-host" bis_skin_checked="1"><template shadowrootmode="closed"><ins class="ee" style="inset: auto !important; clear: none !important; display: block !important; float: none !important; height: 5px !important; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; padding: 0px !important; position: relative !important; vertical-align: baseline !important; visibility: visible !important; width: auto !important; z-index: 1 !important; background-color: rgb(250, 250, 250) !important; box-shadow: rgba(0, 0, 0, 0.2) 0px -1px 5px -1px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px !important;"><span style="display: block !important; width: 80px !important; height: 45px !important; bottom: 0px !important; left: 0% !important; pointer-events: none !important;"><svg style="margin: 0px !important; position: absolute !important; bottom: 0px !important; left: 0% !important; display: block !important; width: 80px !important; height: 30px !important; transform: none !important; pointer-events: initial !important;"><defs><filter id="dropShadowTop" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><fecomponenttransfer in="SourceAlpha" result="TransferredAlpha"><fefuncr type="discrete" tableValues="0.5"></fefuncr><fefuncg type="discrete" tableValues="0.5"></fefuncg><fefuncb type="discrete" tableValues="0.5"></fefuncb></fecomponenttransfer><fegaussianblur in="TransferredAlpha" stdDeviation="2"></fegaussianblur><feoffset dx="0" dy="0" result="offsetblur"></feoffset><femerge><femergenode></femergenode><femergenode in="SourceGraphic"></femergenode></femerge></filter></defs><path d="M0,26 L0,6 A6,6 0 0,1 6,1 L50,1 A6,6 0 0,1 56,6 L56,20 A6,6 0 0,0 62,26 Z" stroke="#FAFAFA" stroke-width="1" fill="#FAFAFA" style="filter: url(&quot;#dropShadowTop&quot;);"></path><rect x="0" y="25" width="80" height="5" style="fill: rgb(250, 250, 250);"></rect><g class="down" stroke="#616161" stroke-width="2px" stroke-linecap="square"><line x1="22" y1="12" x2="28" y2="18"></line><line x1="28" y1="18" x2="34" y2="12"></line></g></svg></span></ins></template></div><div id="aswift_9_host" tabindex="0" title="Advertisement" aria-label="Advertisement" style="border: none !important; height: 124px !important; width: 100% !important; margin: 0px !important; padding: 0px !important; position: relative !important; visibility: visible !important; background-color: transparent !important; display: inline-block !important; inset: auto !important; clear: none !important; float: none !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; vertical-align: baseline !important; z-index: auto !important;" bis_skin_checked="1"><iframe id="aswift_9" name="aswift_9" style="width: 1005px !important; height: 124px !important; display: block; margin: 0px auto;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="1005" height="124" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/zrt_lookup.html" data-google-container-id="a!a" bis_size="{&quot;x&quot;:257,&quot;y&quot;:1217,&quot;w&quot;:1005,&quot;h&quot;:124,&quot;abs_x&quot;:257,&quot;abs_y&quot;:1217}" bis_id="fr_y1xf8mh5248mos6ysiz5g7" bis_depth="0" bis_chainid="8" data-google-query-id="CNSE5u78xoADFRGsvQodV2QASA" data-load-complete="true"></iframe></div></ins><iframe src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/aframe.html" width="0" height="0" style="display: none;" bis_size="{&quot;x&quot;:0,&quot;y&quot;:510,&quot;w&quot;:0,&quot;h&quot;:0,&quot;abs_x&quot;:0,&quot;abs_y&quot;:510}"></iframe></body><iframe id="google_esf" name="google_esf" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/zrt_lookup(1).html" style="display: none;"></iframe><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open"><style>
+  div.grammarly-desktop-integration {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select:none;
+    user-select:none;
+  }
+
+  div.grammarly-desktop-integration:before {
+    content: attr(data-content);
+  }
+</style><div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration" data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}"></div></template></grammarly-desktop-integration><ins class="adsbygoogle adsbygoogle-noablate" data-adsbygoogle-status="done" style="display: none !important; width: 100vw !important; height: 100vh !important; inset: 0px auto auto 0px !important; clear: none !important; float: none !important; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; padding: 0px !important; position: fixed !important; vertical-align: baseline !important; visibility: visible !important; z-index: 2147483647 !important; background: transparent !important;" aria-hidden="true" data-ad-status="filled" data-vignette-loaded="true"><div id="aswift_8_host" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1" style="border: none !important; height: 100vh !important; width: 100vw !important; margin: 0px !important; padding: 0px !important; position: relative !important; visibility: visible !important; background-color: transparent !important; display: inline-block !important; inset: auto !important; clear: none !important; float: none !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; vertical-align: baseline !important; z-index: auto !important;"><iframe id="aswift_8" name="aswift_8" style="width: 100vw !important; height: 100vh !important; inset: 0px auto auto 0px !important; position: absolute !important; clear: none !important; display: inline !important; float: none !important; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; padding: 0px !important; vertical-align: baseline !important; visibility: visible !important; z-index: auto !important;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="" height="" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./16 進数表示するコマンド (1) xxd - Linux コマンド - Linux 入門_files/zrt_lookup(2).html" data-google-container-id="a!9" data-google-query-id="CNOE5u78xoADFRGsvQodV2QASA" data-load-complete="true"></iframe></div></ins></html>

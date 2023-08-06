@@ -1,0 +1,9 @@
+open tunn3l_v1s10n by bynary editor(striling)
+↓
+start from 42 4D →bmp file
+↓
+check the bmp file format by  https://ja.wikipedia.org/wiki/Windows_bitmap
+↓
+address:00000000 0A:BA→0E 0E:BA→28   ←max size 54(36)bytes(54=14(0E)(OS22XBITMAPHEADER(ファイルヘッダ))+40(28)(BITMAPINFOHEADER(情報ヘッダ)))
+↓
+address:00000010 06:32→42 07:01→03(adjusting heights(306(0132))→834(0342)))(LE)

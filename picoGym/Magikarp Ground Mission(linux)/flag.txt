@@ -1,0 +1,8 @@
+launch instance
+↓
+	ssh ctf-player@venus.picoctf.net -p 51985
+  ↓
+  cd 
+  ↓
+  cat 1of3.flag.txt  cat 3of3.flag.txt  cat 2of3.flag.txt
+ 

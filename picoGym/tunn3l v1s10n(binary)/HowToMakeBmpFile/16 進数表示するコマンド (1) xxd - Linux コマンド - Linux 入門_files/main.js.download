@@ -1,0 +1,36 @@
+$(document).ready(function(){
+	function set_iframesize(){
+		var w = $('main').width();
+		var h = w * 9.0/16.0;
+		$('main iframe.yt').css('height', h);
+		$('main iframe.yt').css('width', w);
+	}
+
+	// BEGIN -- Fixed Header Fix
+	$('a').on('click', function(evt){
+		var thref = $(evt.target).attr('href');
+		if(thref && thref.indexOf('#') !== -1) {
+			scrollForFixedHeader()
+		}
+	});
+
+	var whref = window.location.href;
+	if(whref && whref.indexOf('#') !== -1) {
+		scrollForFixedHeader()
+	}
+	// END -- Fixed Header Fix
+
+	$( window ).resize(function() {
+		set_iframesize();
+	});
+
+	set_iframesize();
+});
+
+function scrollForFixedHeader() {
+	var SCROLL_OFFSET = 60;
+	setTimeout(function() {
+		var y = $(window).scrollTop();
+		$(window).scrollTop(y - SCROLL_OFFSET);
+	}, 100);
+}

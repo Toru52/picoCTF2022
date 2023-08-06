@@ -1,0 +1,7 @@
+https://tech.kusuwada.com/entry/2021/04/08/121146
+
+
+
+↓
+#choose_greatest()
+decode_secret(bezos_cc_secret)

@@ -1,0 +1,5 @@
+ exiftool cat.jpg 
+ ↓
+ license stament is bullshit 
+ ↓
+ echo "bullshit" | base64 -d

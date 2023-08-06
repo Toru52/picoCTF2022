@@ -1,0 +1,1 @@
+copy the G code and paste to https://ncviewer.com/

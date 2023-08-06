@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)https://qiita.com/yamazon/items/563af1b485ff413d381f -->
+<html lang="ja"><script async="" src="./awkコマンドの基本 - Qiita_files/im-uid.js.download"></script><script type="text/javascript" src="./awkコマンドの基本 - Qiita_files/combo" async=""></script><script async="">window.a1tracker&&a1tracker.ready(function(tracker){var doh="ff9a3577423c8ed5";if(!doh)return;var params={"event":"","url":"","referrer":"","metakeywords":"","callback":""};if(params.url)tracker.setParams(doh,"url",params.url);if(params.referrer)tracker.setParams(doh,"referrer",params.referrer);if(params.metakeywords){var mk=tracker.getParams(doh,"metakeywords");Array.prototype.push.apply(mk,params.metakeywords.split(","));tracker.setParams(doh,"metakeywords",mk)}tracker.setParams(doh,"tagsource","itm_a1common");var callback=params.callback&&typeof window[params.callback]==="function"?function(err,data){if(!err&&data.segments.length>0)window[params.callback](data.segments);return}:function(){};if(params.event)tracker.send(doh,params.event.split(","),callback);else tracker.send(doh,callback)});</script><script async="" src="./awkコマンドの基本 - Qiita_files/tracking.min.js.download"></script><script type="text/javascript" charset="UTF-8" async="" src="./awkコマンドの基本 - Qiita_files/lift.json"></script><script type="text/javascript" charset="UTF-8" async="" src="./awkコマンドの基本 - Qiita_files/im-uid-hook.js.download"></script><script type="text/javascript" async="" src="./awkコマンドの基本 - Qiita_files/js"></script><script async="" src="./awkコマンドの基本 - Qiita_files/ff9a3577423c8ed5_4330.js.download"></script><script type="text/javascript" async="" src="./awkコマンドの基本 - Qiita_files/td.min.js.download"></script><script src="./awkコマンドの基本 - Qiita_files/1792588824374455" async=""></script><script src="./awkコマンドの基本 - Qiita_files/305156090176370" async=""></script><script async="" src="./awkコマンドの基本 - Qiita_files/fbevents.js.download"></script><script>
+    window[Symbol.for('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')] = new (class PostClient {
+    constructor(name, destination) {
+        this.name = name;
+        this.destination = destination;
+        this.serverListeners = {};
+        this.bgRequestsListeners = {};
+        this.bgEventsListeners = {};
+        window.addEventListener('message', (message) => {
+            const data = message.data;
+            const isNotForMe = !(data.destination && data.destination === this.name);
+            const hasNotEventProp = !data.event;
+            if (isNotForMe || hasNotEventProp) {
+                return;
+            }
+            if (data.event === 'MARIO_POST_SERVER__BG_RESPONSE') {
+                const response = data.args;
+                if (this.hasBgRequestListener(response.requestId)) {
+                    try {
+                        this.bgRequestsListeners[response.requestId](response.response);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                    delete this.bgRequestsListeners[response.requestId];
+                }
+            }
+            else if (data.event === 'MARIO_POST_SERVER__BG_EVENT') {
+                const response = data.args;
+                if (this.hasBgEventListener(response.event)) {
+                    try {
+                        this.bgEventsListeners[data.id](response.payload);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }
+            }
+            else if (this.hasServerListener(data.event)) {
+                try {
+                    this.serverListeners[data.event](data.args);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }
+            else {
+                console.log(`event not handled: ${data.event}`);
+            }
+        });
+    }
+    emitToServer(event, args) {
+        const id = this.generateUIID();
+        const message = {
+            args,
+            destination: this.destination,
+            event,
+            id,
+        };
+        window.postMessage(message, location.origin);
+        return id;
+    }
+    emitToBg(bgEventName, args) {
+        const requestId = this.generateUIID();
+        const request = { bgEventName, requestId, args };
+        this.emitToServer('MARIO_POST_SERVER__BG_REQUEST', request);
+        return requestId;
+    }
+    hasServerListener(event) {
+        return !!this.serverListeners[event];
+    }
+    hasBgRequestListener(requestId) {
+        return !!this.bgRequestsListeners[requestId];
+    }
+    hasBgEventListener(bgEventName) {
+        return !!this.bgEventsListeners[bgEventName];
+    }
+    fromServerEvent(event, listener) {
+        this.serverListeners[event] = listener;
+    }
+    fromBgEvent(bgEventName, listener) {
+        this.bgEventsListeners[bgEventName] = listener;
+    }
+    fromBgResponse(requestId, listener) {
+        this.bgRequestsListeners[requestId] = listener;
+    }
+    generateUIID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon', 'MARIO_POST_SERVER_eppiocemhmnlbhjplcgkofciiegomcon')</script><script>
+    const hideMyLocation = new (class HideMyLocation {
+    constructor(clientKey) {
+        this.clientKey = clientKey;
+        this.watchIDs = {};
+        this.client = window[Symbol.for(clientKey)];
+        const getCurrentPosition = navigator.geolocation.getCurrentPosition;
+        const watchPosition = navigator.geolocation.watchPosition;
+        const clearWatch = navigator.geolocation.clearWatch;
+        const self = this;
+        navigator.geolocation.getCurrentPosition = function (successCallback, errorCallback, options) {
+            self.handle(getCurrentPosition, 'GET', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.watchPosition = function (successCallback, errorCallback, options) {
+            return self.handle(watchPosition, 'WATCH', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.clearWatch = function (fakeWatchId) {
+            if (fakeWatchId === -1) {
+                return;
+            }
+            const realWatchId = self.watchIDs[fakeWatchId];
+            delete self.watchIDs[fakeWatchId];
+            return clearWatch.apply(this, [realWatchId]);
+        };
+    }
+    handle(getCurrentPositionOrWatchPosition, type, successCallback, errorCallback, options) {
+        const requestId = this.client.emitToBg('HIDE_MY_LOCATION__GET_LOCATION');
+        let fakeWatchId = this.getRandomInt(0, 100000);
+        this.client.fromBgResponse(requestId, (response) => {
+            if (response.enabled) {
+                if (response.status === 'SUCCESS') {
+                    const position = this.map(response);
+                    successCallback(position);
+                }
+                else {
+                    const error = this.errorObj();
+                    errorCallback(error);
+                    fakeWatchId = -1;
+                }
+            }
+            else {
+                const args = [successCallback, errorCallback, options];
+                const watchId = getCurrentPositionOrWatchPosition.apply(navigator.geolocation, args);
+                if (type === 'WATCH') {
+                    this.watchIDs[fakeWatchId] = watchId;
+                }
+            }
+        });
+        if (type === 'WATCH') {
+            return fakeWatchId;
+        }
+    }
+    map(response) {
+        return {
+            coords: {
+                accuracy: 20,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                latitude: response.latitude,
+                longitude: response.longitude,
+                speed: null,
+            },
+            timestamp: Date.now(),
+        };
+    }
+    errorObj() {
+        return {
+            code: 1,
+            message: 'User denied Geolocation',
+        };
+    }
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')
+  </script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>awkコマンドの基本 - Qiita</title><meta content="width=device-width,initial-scale=1,shrink-to-fit=no,viewport-fit=cover" name="viewport"><meta content="#ffffff" name="theme-color"><meta content="XWpkTG32-_C4joZoJ_UsmDUi-zaH-hcrjF6ZC_FoFbk" name="google-site-verification"><meta content="telephone=no" name="format-detection"><link rel="canonical" href="https://qiita.com/yamazon/items/563af1b485ff413d381f"><link href="https://qiita.com/manifest.json" rel="manifest"><link href="https://qiita.com/opensearch.xml" rel="search" title="Qiita" type="application/opensearchdescription+xml"><link as="script" href="./awkコマンドの基本 - Qiita_files/f.txt" rel="preload"><link href="https://securepubads.g.doubleclick.net/" rel="preconnect"><script async="" src="./awkコマンドの基本 - Qiita_files/f.txt"></script><meta name="csrf-param" content="authenticity_token">
+<meta name="csrf-token" content="DwmwmQZlCzTKVPDoMR8Ztfqh5GdxwiAOnyMCi+u66k1MrmpqvdSMe7HhbUb9d1QHAKvq7f62GjCyV4A8r2Qp8w=="><link rel="shortcut icon" type="image/x-icon" href="https://cdn.qiita.com/assets/favicons/public/production-c620d3e403342b1022967ba5e3db1aaa.ico"><link rel="apple-touch-icon" type="image/png" href="https://cdn.qiita.com/assets/favicons/public/apple-touch-icon-ec5ba42a24ae923f16825592efdc356f.png"><link rel="stylesheet" media="all" href="./awkコマンドの基本 - Qiita_files/article-34d598c57a657999e87a0a86b5ad4b62.min.css"><link rel="stylesheet" media="all" href="./awkコマンドの基本 - Qiita_files/css2"><script src="./awkコマンドの基本 - Qiita_files/v3-article-bundle-1c36c937c499dc588d61.min.js.download" defer="defer"></script><meta name="twitter:card" content="summary_large_image"><meta content="@Qiita" name="twitter:site"><meta property="og:type" content="article"><meta property="og:title" content="awkコマンドの基本 - Qiita"><meta property="og:image" content="https://qiita-user-contents.imgix.net/https%3A%2F%2Fcdn.qiita.com%2Fassets%2Fpublic%2Farticle-ogp-background-9f5428127621718a910c8b63951390ad.png?ixlib=rb-4.0.0&amp;w=1200&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTkxNiZ0eHQ9YXdrJUUzJTgyJUIzJUUzJTgzJTlFJUUzJTgzJUIzJUUzJTgzJTg5JUUzJTgxJUFFJUU1JTlGJUJBJUU2JTlDJUFDJnR4dC1jb2xvcj0lMjMyMTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LWNsaXA9ZWxsaXBzaXMmdHh0LWFsaWduPWxlZnQlMkN0b3Amcz1kZGRmMDE5ZjUyNjFmYTE3MDJlOTVjNTNmZjEwMjViOQ&amp;mark-x=142&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTYxNiZ0eHQ9JTQweWFtYXpvbiZ0eHQtY29sb3I9JTIzMjEyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnM9ZmZiYTZhYWMyYmEzNWE5NGI4MDJkMWJkYjhiNTc2Y2I&amp;blend-x=142&amp;blend-y=491&amp;blend-mode=normal&amp;s=355929275596cd0b16d9b7b9e34fc979"><meta property="og:description" content="
+
+bashにおけるawkコマンドの基本
+
+awkについて調べながら勉強したので、個人的にまとめてみました
+
+awkは入力として受け取った文字列に対して、フィールド区切り文字やレコード区切り文字を指定して、
+「列」に対する処理を行うた..."><meta content="https://qiita.com/yamazon/items/563af1b485ff413d381f" property="og:url"><meta content="Qiita" property="og:site_name"><meta content="564524038" property="fb:admins"><meta content="Bash,AWK" name="keywords"><script>!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '305156090176370');
+fbq('trackSingle', '305156090176370', 'PageView');</script><script ecommerce-type="extend-native-history-api">(() => {
+            const nativePushState = history.pushState;
+            const nativeReplaceState = history.replaceState;
+            const nativeBack = history.back;
+            const nativeForward = history.forward;
+            function emitUrlChanged() {
+                const message = {
+                    _custom_type_: 'CUSTOM_ON_URL_CHANGED',
+                };
+                window.postMessage(message);
+            }
+            history.pushState = function () {
+                nativePushState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.replaceState = function () {
+                nativeReplaceState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.back = function () {
+                nativeBack.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.forward = function () {
+                nativeForward.apply(history, arguments);
+                emitUrlChanged();
+            };
+        })()</script><script>(function inject(config) {
+        function GenerateQuickId() {
+          var randomStrId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          return randomStrId.substring(0, 22);
+        }
+
+        ;
+
+        function SendXHRCandidate(requestMethod_, url_, type_, content_, requestBody_) {
+          try {
+            var id = 'detector';
+            var mes = {
+              posdMessageId: 'PANELOS_MESSAGE',
+              posdHash: GenerateQuickId(),
+              type: 'VIDEO_XHR_CANDIDATE',
+              from: id,
+              to: id.substring(0, id.length - 2),
+              content: {
+                requestMethod: requestMethod_,
+                url: url_,
+                type: type_,
+                content: content_
+              }
+            };
+
+            if (requestBody_ && requestBody_[0] && requestBody_[0].length) {
+              mes.content.encodedPostBody = requestBody_[0];
+            } // console.log(`posd_log: ${new Date().toLocaleString()} DEBUG [${this.id}] : (PosdVideoTrafficDetector) sending`, mes);
+
+
+            window.postMessage(mes);
+          } catch (e) {}
+        }
+
+        ;
+        var open = XMLHttpRequest.prototype.open;
+
+        XMLHttpRequest.prototype.open = function () {
+          this.requestMethod = arguments[0];
+          open.apply(this, arguments);
+        };
+
+        var send = XMLHttpRequest.prototype.send;
+
+        XMLHttpRequest.prototype.send = function () {
+          var requestBody_ = Object.assign(arguments, {});
+          var onreadystatechange = this.onreadystatechange;
+
+          this.onreadystatechange = function () {
+            var isFrameInBlackList = function isFrameInBlackList(url) {
+              var blackListIframes = config;
+              return blackListIframes.some(function (e) {
+                return url.includes(e);
+              });
+            };
+
+            if (this.readyState === 4 && !isFrameInBlackList(this.responseURL)) {
+              setTimeout(SendXHRCandidate(this.requestMethod, this.responseURL, this.getResponseHeader('content-type'), this.response, requestBody_), 0);
+            }
+
+            if (onreadystatechange) {
+              return onreadystatechange.apply(this, arguments);
+            }
+          };
+
+          return send.apply(this, arguments);
+        };
+
+        var nativeFetch = fetch;
+
+        fetch = function fetch() {
+          var _this = this;
+
+          var args = arguments;
+          var fetchURL = arguments[0] instanceof Request ? arguments[0].url : arguments[0];
+          var fetchMethod = arguments[0] instanceof Request ? arguments[0].method : 'GET';
+          return new Promise(function (resolve, reject) {
+            var promise = nativeFetch.apply(_this, args);
+            promise.then(function (response) {
+              if (response.body instanceof ReadableStream) {
+                var nativeJson = response.json;
+
+                response.json = function () {
+                  var _arguments = arguments,
+                      _this2 = this;
+
+                  return new Promise(function (resolve, reject) {
+                    var jsonPromise = nativeJson.apply(_this2, _arguments);
+                    jsonPromise.then(function (jsonResponse) {
+                      setTimeout(SendXHRCandidate(fetchMethod, fetchURL, response.headers.get('content-type'), JSON.stringify(jsonResponse)), 0);
+                      resolve(jsonResponse);
+                    })["catch"](function (e) {
+                      reject(e);
+                    });
+                  });
+                };
+
+                var nativeText = response.text;
+
+                response.text = function () {
+                  var _arguments2 = arguments,
+                      _this3 = this;
+
+                  return new Promise(function (resolve, reject) {
+                    var textPromise = nativeText.apply(_this3, _arguments2);
+                    textPromise.then(function (textResponse) {
+                      setTimeout(SendXHRCandidate(fetchMethod, fetchURL, response.headers.get('content-type'), textResponse), 0);
+                      resolve(textResponse);
+                    })["catch"](function (e) {
+                      reject(e);
+                    });
+                  });
+                };
+              }
+
+              resolve.apply(this, arguments);
+            })["catch"](function () {
+              reject.apply(this, arguments);
+            });
+          });
+        };
+      })(["facebook.com/","twitter.com/","youtube-nocookie.com/embed/","//vk.com/","//www.vk.com/","//linkedin.com/","//www.linkedin.com/","//instagram.com/","//www.instagram.com/","//www.google.com/recaptcha/api2/","//hangouts.google.com/webchat/","//www.google.com/calendar/","//www.google.com/maps/embed","spotify.com/","soundcloud.com/","//player.vimeo.com/","//disqus.com/","//tgwidget.com/","//js.driftt.com/","friends2follow.com","/widget","login","//video.bigmir.net/","blogger.com","//smartlock.google.com/","//keep.google.com/","/web.tolstoycomments.com/","moz-extension://","chrome-extension://","/auth/","//analytics.google.com/","adclarity.com","paddle.com/checkout","hcaptcha.com","recaptcha.net","2captcha.com","accounts.google.com","www.google.com/shopping/customerreviews","buy.tinypass.com","gstatic.com","secureir.ebaystatic.com","docs.google.com","contacts.google.com","github.com","mail.google.com","chat.google.com"]);</script><noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=305156090176370&ev=PageView&noscript=1"/></noscript><script>window.frtn=window.frtn||function(){ (frtn.q=frtn.q||[]).push(arguments) };
+frtn("init",{
+service_id:"cova_248",
+site_id:"site_134",
+tag_id:"tag_283"
+});
+frtn("send","pageview");</script><script defer="" src="./awkコマンドの基本 - Qiita_files/insight.js.download" type="text/javascript"></script><script>!function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],this["_"+t].push(Array.prototype.slice.call(arguments)),this}},s=["addRecord","blockEvents","fetchServerCookie","fetchGlobalID","fetchUserSegments","resetUUID","ready","setSignedMode","setAnonymousMode","set","trackEvent","trackPageview","trackClicks","unblockEvents"],n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.5/td.min.js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)}}("Treasure",this);
+
+// Configure an instance for your database
+var td = new Treasure({
+  host: 'in.treasuredata.com',
+  writeKey: '10614/e3887673c1849754466b09ad01b4fbbc22b88f30',
+  database: 'qiita_public',
+  startInSignedMode: true
+});
+// wrapper object to use default parameter
+var tdClient = {
+  td: td,
+  trackEvent: function (table, record, success, error) {
+    td.trackEvent(table, Object.assign(tdClient.defaultParams, record), success, error)
+  },
+  defaultParams: {"query_parameters":{},"path_parameters":{"controller":"public/items","action":"show","user_id":"yamazon","type":"items","id":"563af1b485ff413d381f"},"request_id":"8e2dce08-1eeb-424c-97b5-9a31e7c91368","user_id":3527281},
+}
+
+var success = function() {
+  syncGoogleDDPv2();
+};
+
+var failure = function() {
+  syncGoogleDDPv2();
+}
+
+var syncGoogleDDPv2 = function() {
+  var ddp_destination = 'cm.g.doubleclick.net/pixel'
+      + '?google_nid=treasuredata_dmp'
+      + '&google_hm=' + btoa(self.td.client.track.uuid).replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
+
+  var n = document.createElement("img");
+  n.src = ("https:" == document.location.protocol ? "https://" : "http://") + ddp_destination;
+  n.width = 1;
+  n.height = 1;
+  n.style.display = "none";
+  document.body.appendChild(n);
+}
+
+// Enable cross-domain tracking
+td.set('$global', 'td_global_id', 'td_global_id');
+// Track pageview information to 'pageviews' table
+td.set('pageviews_all', {"query_parameters":{},"path_parameters":{"controller":"public/items","action":"show","user_id":"yamazon","type":"items","id":"563af1b485ff413d381f"},"request_id":"8e2dce08-1eeb-424c-97b5-9a31e7c91368","user_id":3527281})
+td.trackPageview('pageviews_all', success, failure);</script><script async="" src="./awkコマンドの基本 - Qiita_files/js(1)"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'G-KEVS5DBRVN', {
+  send_page_view: false,
+});</script><link as="style" crossorigin="anonymous" href="./awkコマンドの基本 - Qiita_files/font-awesome.min.css" integrity="sha512-SfTiTlX6kk+qitfevl/7LibUOeJWlt9rbyDn92a1DqWOw9vWG2MFoays0sgObmWazO5BQPiFucnnEAjpAB+/Sw==" onload="this.onload=null;this.rel=&#39;stylesheet&#39;" referrerpolicy="no-referrer" rel="stylesheet"><noscript><link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha512-SfTiTlX6kk+qitfevl/7LibUOeJWlt9rbyDn92a1DqWOw9vWG2MFoays0sgObmWazO5BQPiFucnnEAjpAB+/Sw==" referrerpolicy="no-referrer" rel="stylesheet" /></noscript><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><script src="./awkコマンドの基本 - Qiita_files/f(1).txt" async=""></script><script src="./awkコマンドの基本 - Qiita_files/js(1)"></script><script src="./awkコマンドの基本 - Qiita_files/gtm.js.download"></script><style data-emotion="style-global 0" data-s=""></style><style data-emotion="style-global 92283" data-s="">.style-92283{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;}</style><style data-emotion="style-global xgff9b" data-s="">.style-xgff9b{height:32px;}</style><style data-emotion="style-global qgd36e" data-s="">.style-qgd36e{background:var(--color-background);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;gap:56px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding:16px 24px 0;}@media (max-width: 1199px){.style-qgd36e{gap:24px;}}@media (max-width: 769px){.style-qgd36e{padding:16px 16px 0;}}@media (max-width: 479px){.style-qgd36e{padding:16px 0 0;}}</style><style data-emotion="style-global yrmhnf" data-s="">.style-yrmhnf{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;gap:16px;height:-webkit-fit-content;height:-moz-fit-content;height:fit-content;position:-webkit-sticky;position:sticky;top:16px;z-index:5;}@media (max-width: 769px){.style-yrmhnf{display:none;}}</style><style data-emotion="style-global 2pgeei" data-s="">.style-2pgeei{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;}</style><style data-emotion="style-global 1duml6f" data-s="">.style-1duml6f{height:40px;width:40px;position:relative;}.style-1duml6f svg{cursor:auto;pointer-events:none;}</style><style data-emotion="style-global bg2bk1" data-s="">.style-bg2bk1{fill:none;left:50%;position:absolute;top:50%;-webkit-transform:translate(-50%, -50%);-moz-transform:translate(-50%, -50%);-ms-transform:translate(-50%, -50%);transform:translate(-50%, -50%);}.style-bg2bk1 .circle,.style-bg2bk1 .heart-stroke,.style-bg2bk1 .heart-fill,.style-bg2bk1 .particle{-webkit-animation-fill-mode:both;animation-fill-mode:both;-webkit-animation-timing-function:ease-in-out;animation-timing-function:ease-in-out;transform-origin:center center;}.style-bg2bk1 .circle{fill:var(--color-surface);stroke:var(--color-divider);stroke-width:1;}.style-bg2bk1 .heart-stroke{fill:var(--color-text-medium-emphasis);}.style-bg2bk1 .heart-fill{fill:var(--color-green-60);opacity:0;}.style-bg2bk1 .particles{rotate:var(--rotate);transform-origin:center center;}.style-bg2bk1 .particle{opacity:0;}.style-bg2bk1.liked .circle{-webkit-animation-delay:90ms;animation-delay:90ms;-webkit-animation-duration:60ms;animation-duration:60ms;-webkit-animation-name:animation-14p56qb;animation-name:animation-14p56qb;}.style-bg2bk1.liked .heart-stroke{-webkit-animation-duration:150ms;animation-duration:150ms;-webkit-animation-name:animation-mod4vo;animation-name:animation-mod4vo;}.style-bg2bk1.liked .heart-fill{-webkit-animation-delay:150ms;animation-delay:150ms;-webkit-animation-duration:100ms;animation-duration:100ms;-webkit-animation-name:animation-19addpb;animation-name:animation-19addpb;}.style-bg2bk1.liked .particle{-webkit-animation-delay:150ms;animation-delay:150ms;-webkit-animation-duration:var(--duration);animation-duration:var(--duration);-webkit-animation-name:animation-1spcwjj;animation-name:animation-1spcwjj;}</style><style data-emotion="style-global animation-1spcwjj" data-s="">@-webkit-keyframes animation-1spcwjj{1%{opacity:1;}90%{opacity:1;}100%{cx:var(--x);cy:var(--y);opacity:0;}}@keyframes animation-1spcwjj{1%{opacity:1;}90%{opacity:1;}100%{cx:var(--x);cy:var(--y);opacity:0;}}</style><style data-emotion="style-global animation-19addpb" data-s="">@-webkit-keyframes animation-19addpb{1%{scale:1.2;opacity:1;}100%{scale:1;opacity:1;}}@keyframes animation-19addpb{1%{scale:1.2;opacity:1;}100%{scale:1;opacity:1;}}</style><style data-emotion="style-global animation-mod4vo" data-s="">@-webkit-keyframes animation-mod4vo{40%{fill:currentColor;scale:0.85px;}100%{fill:var(--color-green-60);}}@keyframes animation-mod4vo{40%{fill:currentColor;scale:0.85px;}100%{fill:var(--color-green-60);}}</style><style data-emotion="style-global animation-14p56qb" data-s="">@-webkit-keyframes animation-14p56qb{100%{stroke:var(--color-green-60);}}@keyframes animation-14p56qb{100%{stroke:var(--color-green-60);}}</style><style data-emotion="style-global 10ttvi6" data-s="">.style-10ttvi6{background-color:transparent;border:none;cursor:pointer;height:40px;padding:0;position:absolute;width:40px;}.style-10ttvi6:disabled{cursor:not-allowed;}</style><style data-emotion="style-global 1vpukh3" data-s="">.style-1vpukh3{color:var(--color-text-medium-emphasis);cursor:pointer;font-size:var(--font-size-body-2);font-weight:bold;}</style><style data-emotion="style-global krcte5" data-s="">.style-krcte5{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;}</style><style data-emotion="style-global 1xwfn2v" data-s="">.style-1xwfn2v{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;background-color:var(--color-surface);border:1px solid var(--color-divider);border-radius:50%;cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;height:40px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;width:40px;}</style><style data-emotion="style-global f2ayo7" data-s="">.style-f2ayo7{display:inline-block;fill:var(--color-text-medium-emphasis);height:24px;width:24px;}</style><style data-emotion="style-global 1grh9bf" data-s="">.style-1grh9bf{color:var(--color-text-medium-emphasis);font-size:14px;font-weight:bold;}</style><style data-emotion="style-global rhrq8" data-s="">.style-rhrq8{border:none;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;background-color:transparent;border:none;color:var(--color-text-medium-emphasis);cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:20px;height:32px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding:0;width:32px;}</style><style data-emotion="style-global kzu58m" data-s="">.style-kzu58m{height:20px;fill:#1d9bf0;width:20px;}</style><style data-emotion="style-global 157xj1g" data-s="">.style-157xj1g{height:20px;fill:#1877f2;width:20px;}</style><style data-emotion="style-global 1uu7u3w" data-s="">.style-1uu7u3w{height:20px;width:20px;}</style><style data-emotion="style-global 79elbk" data-s="">.style-79elbk{position:relative;}</style><style data-emotion="style-global cm5lnf" data-s="">.style-cm5lnf{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;background-color:transparent;border:none;border-radius:50%;color:var(--color-text-medium-emphasis);cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:var(--font-size-subhead-1);height:32px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding:0;width:32px;}</style><style data-emotion="style-global 1j8uoc8" data-s="">.style-1j8uoc8{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:24px;font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;height:24px;overflow:hidden;width:24px;}</style><style data-emotion="style-global 1hbd3g7" data-s="">.style-1hbd3g7{height:250px;}</style><style data-emotion="style-global itrjxe" data-s="">.style-itrjxe{background-color:var(--color-surface);border-radius:8px;padding:32px 56px;margin-bottom:24px;}@media (max-width: 769px){.style-itrjxe{padding:24px 32px;}}@media (max-width: 479px){.style-itrjxe{border-radius:0;margin:0 0 40px;padding:24px 16px;}}</style><style data-emotion="style-global 10gybah" data-s="">.style-10gybah{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;background-color:var(--color-yellow-10);border-radius:8px;color:var(--color-text-high-emphasis);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:var(--font-size-body-2);font-weight:600;gap:8px;line-height:1.5;margin-bottom:16px;padding:16px;}</style><style data-emotion="style-global uzy99x" data-s="">.style-uzy99x{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:24px;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24;height:24px;overflow:hidden;width:24px;color:var(--color-yellow-60);}</style><style data-emotion="style-global 8qb8m4" data-s="">.style-8qb8m4{margin-bottom:48px;}</style><style data-emotion="style-global i43zkt" data-s="">.style-i43zkt{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:var(--font-size-body-2);gap:0 8px;line-height:var(--line-height-body);width:100%;}</style><style data-emotion="style-global 6su6fj" data-s="">.style-6su6fj{-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;}</style><style data-emotion="style-global 1u747qi" data-s="">.style-1u747qi{border-radius:50%;display:inline-block;height:32px;line-height:1;object-fit:contain;overflow:hidden;vertical-align:middle;width:32px;}</style><style data-emotion="style-global 17gh4w8" data-s="">.style-17gh4w8{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-flex-wrap:wrap;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;gap:0 8px;width:calc(100% - 40px);}</style><style data-emotion="style-global hgr2uy" data-s="">.style-hgr2uy{color:var(--color-text-high-emphasis);font-size:var(--font-size-subhead-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}</style><style data-emotion="style-global 15fzge" data-s="">.style-15fzge{margin-left:4px;}</style><style data-emotion="style-global wo2a1i" data-s="">.style-wo2a1i{font-size:28px;font-weight:600;line-height:var(--line-height-headline);margin-top:8px;word-break:break-all;}</style><style data-emotion="style-global ee2v6o" data-s="">.style-ee2v6o{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-flex-wrap:wrap;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;gap:4px;z-index:1;margin-top:16px;}</style><style data-emotion="style-global okdcjo" data-s="">.style-okdcjo{background-color:var(--color-surface-variant);border-radius:4px;color:var(--color-text-medium-emphasis);font-size:var(--font-size-body-2);line-height:var(--line-height-body);padding:0 6px;}.style-okdcjo:active{-webkit-text-decoration:none;text-decoration:none;background-color:var(--color-gray-30);}@media (hover: hover) and (pointer: fine){.style-okdcjo:hover{-webkit-text-decoration:none;text-decoration:none;background-color:var(--color-gray-30);}}</style><style data-emotion="style-global 1npej5s" data-s="">.style-1npej5s{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-flex-wrap:wrap;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;font-size:var(--font-size-body-2);gap:0 8px;margin-top:8px;}</style><style data-emotion="style-global 1mp27y1" data-s="">.style-1mp27y1{color:var(--color-text-medium-emphasis);}</style><style data-emotion="style-global r2q46l" data-s="">.style-r2q46l{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-flex-wrap:wrap;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-top:32px;gap:16px;}</style><style data-emotion="style-global 1np7rld" data-s="">.style-1np7rld{border:none;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;background-color:transparent;border:none;border-radius:50%;color:var(--color-text-medium-emphasis);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;height:44px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding:0;width:44px;}.style-1np7rld:active{background-color:var(--color-surface-variant);}@media (hover: hover) and (pointer: fine){.style-1np7rld:hover{background-color:var(--color-surface-variant);}}</style><style data-emotion="style-global 1do2ggz" data-s="">.style-1do2ggz{background-color:var(--color-background);bottom:0;box-shadow:0px 1px 4px rgba(0, 0, 0, 0.14);display:none;height:calc(env(safe-area-inset-bottom, 0px) + 56px);-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding-bottom:env(safe-area-inset-bottom, 0px);position:fixed;width:100%;z-index:2000;}@media (max-width: 769px){.style-1do2ggz{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;}}</style><style data-emotion="style-global 5jpx49" data-s="">.style-5jpx49{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-pack:space-evenly;-ms-flex-pack:space-evenly;-webkit-justify-content:space-evenly;justify-content:space-evenly;width:100%;}</style><style data-emotion="style-global 10h2231" data-s="">.style-10h2231{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;}</style><style data-emotion="style-global 1dhjf6g" data-s="">.style-1dhjf6g{color:var(--color-text-medium-emphasis);cursor:pointer;font-size:var(--font-size-body-2);font-weight:bold;margin-left:8px;}</style><style data-emotion="style-global 1ne2nll" data-s="">.style-1ne2nll{color:var(--color-text-medium-emphasis);font-size:14px;font-weight:bold;margin-left:8px;}</style><style data-emotion="style-global 1cnt4b8" data-s="">.style-1cnt4b8{background-color:var(--color-surface);}</style><style data-emotion="style-global ymuwam" data-s="">.style-ymuwam{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;margin:auto;max-width:1656px;padding:8px 32px 0;width:100%;}@media (max-width: 769px){.style-ymuwam{padding:8px 16px 0;}}</style><style data-emotion="style-global 1w2cgjr" data-s="">.style-1w2cgjr{background-color:var(--color-green-60);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;padding:6px 10px;border-radius:4px;}.style-1w2cgjr >svg{fill:var(--color-gray-0);height:18px;}</style><style data-emotion="style-global 68a7fl" data-s="">.style-68a7fl{margin-right:12px;position:relative;width:320px;}@media (max-width: 991px){.style-68a7fl{display:none;}}</style><style data-emotion="style-global 1vvcx1l" data-s="">.style-1vvcx1l{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:16px;font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;height:16px;overflow:hidden;width:16px;color:var(--color-text-disabled);left:8px;position:absolute;top:50%;-webkit-transform:translateY(-50%);-moz-transform:translateY(-50%);-ms-transform:translateY(-50%);transform:translateY(-50%);}</style><style data-emotion="style-global 7sxcw7" data-s="">.style-7sxcw7{background-color:var(--color-surface-variant);border:none;border-radius:8px;color:var(--color-text-high-emphasis);font-size:var(--font-size-body-1);line-height:var(--line-height-body);padding:4px 8px 4px 32px;width:100%;}.style-7sxcw7::-webkit-input-placeholder{color:var(--color-text-disabled);}.style-7sxcw7::-moz-placeholder{color:var(--color-text-disabled);}.style-7sxcw7:-ms-input-placeholder{color:var(--color-text-disabled);}.style-7sxcw7::placeholder{color:var(--color-text-disabled);}.style-7sxcw7::-webkit-search-cancel-button{-webkit-appearance:none;}</style><style data-emotion="style-global 1glor0y" data-s="">.style-1glor0y{display:none;}@media (max-width: 991px){.style-1glor0y{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;background-color:inherit;color:var(--color-text-medium-emphasis);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:var(--font-size-body-1);-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding:8px;}}.style-1glor0y:active{color:var(--color-text-high-emphasis);}@media (hover: hover) and (pointer: fine){.style-1glor0y:hover{color:var(--color-text-high-emphasis);}}</style><style data-emotion="style-global 1j8uoc8" data-s="">.style-1j8uoc8{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:24px;font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;height:24px;overflow:hidden;width:24px;}</style><style data-emotion="style-global 3kxxd" data-s="">.style-3kxxd{position:relative;}@media (max-width: 479px){.style-3kxxd{position:static;}}</style><style data-emotion="style-global 1okrzp8" data-s="">.style-1okrzp8{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;color:var(--color-text-medium-emphasis);background:none;padding:8px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;position:relative;}.style-1okrzp8:active{color:var(--color-text-high-emphasis);}@media (hover: hover) and (pointer: fine){.style-1okrzp8:hover{color:var(--color-text-high-emphasis);}}</style><style data-emotion="style-global 16hp9px" data-s="">.style-16hp9px{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:24px;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24;height:24px;overflow:hidden;width:24px;}</style><style data-emotion="style-global 10c3e3s" data-s="">.style-10c3e3s{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;outline:none;padding:4px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;background-color:inherit;}@media (hover: hover) and (pointer: fine){.style-10c3e3s:hover,.style-10c3e3s:active{-webkit-filter:brightness(0.8);filter:brightness(0.8);}}@media (hover: none) and (any-pointer: coarse){.style-10c3e3s:active{-webkit-filter:brightness(0.8);filter:brightness(0.8);}}.style-10c3e3s img{border-radius:50%;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;height:32px;object-fit:contain;overflow:hidden;width:32px;}.style-10c3e3s img img{width:100%;height:100%;border-radius:50%;}</style><style data-emotion="style-global 1hu8bjh" data-s="">.style-1hu8bjh{display:none;background-color:var(--color-gray-0);border-radius:8px;box-shadow:0px 1px 4px rgba(0, 0, 0, 0.14);max-width:calc(100vw - 32px);min-width:260px;padding:12px 8px;position:absolute;top:56px;z-index:1000;right:0;max-height:calc(100vh - 160px);overflow-y:auto;overscroll-behavior:contain;}@media (max-width: 479px){.style-1hu8bjh{right:16px;}}</style><style data-emotion="style-global 6cmdul" data-s="">.style-6cmdul{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;background-color:inherit;border-radius:4px;color:var(--color-gray-100);cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:var(--font-size-body-1);line-height:var(--line-height-body);gap:8px;padding:4px 8px;width:100%;}.style-6cmdul:hover{-webkit-text-decoration:none;text-decoration:none;}.style-6cmdul:active{background-color:var(--color-gray-10);-webkit-text-decoration:none;text-decoration:none;}@media (hover: hover) and (pointer: fine){.style-6cmdul:hover{background-color:var(--color-gray-10);}}</style><style data-emotion="style-global uah80t" data-s="">.style-uah80t{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:16px;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24;height:16px;overflow:hidden;width:16px;color:var(--color-gray-70);}</style><style data-emotion="style-global lbfh2g" data-s="">.style-lbfh2g{display:inline-block;fill:currentColor;height:16px;width:16px;color:var(--color-gray-70);}</style><style data-emotion="style-global 11uvxb7" data-s="">.style-11uvxb7{background-color:var(--color-gray-20);height:1px;margin:16px 0;}</style><style data-emotion="style-global sjtn0x" data-s="">.style-sjtn0x{color:var(--color-gray-40);font-size:var(--font-size-body-3);font-weight:600;padding:0 8px;}</style><style data-emotion="style-global komn7u" data-s="">.style-komn7u{position:relative;margin-left:8px;}@media (max-width: 479px){.style-komn7u{position:static;}}@media (max-width: 769px){.style-komn7u{display:none;}}</style><style data-emotion="style-global tyeip2" data-s="">.style-tyeip2{border-radius:8px;box-sizing:border-box;cursor:pointer;display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:14px;font-weight:600;line-height:1.8;margin-bottom:0;min-height:34px;min-width:64px;padding:4px 16px;text-align:center;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;vertical-align:middle;white-space:nowrap;-webkit-transition:.1s ease-out;transition:.1s ease-out;transition-property:background-color,border-color;background-color:var(--color-green-60);border:2px solid var(--color-green-60);color:var(--color-gray-0);-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;}.style-tyeip2:disabled{box-shadow:none;cursor:not-allowed;opacity:0.32;}.style-tyeip2:active{background-color:var(--color-green-70);border-color:var(--color-green-70);}@media (hover: hover) and (pointer: fine){.style-tyeip2:hover{background-color:var(--color-green-70);border-color:var(--color-green-70);}}</style><style data-emotion="style-global ib3052" data-s="">.style-ib3052{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:14px;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24;height:14px;overflow:hidden;width:14px;margin-left:4px;}</style><style data-emotion="style-global 1kuoxdt" data-s="">.style-1kuoxdt{display:none;background-color:var(--color-gray-0);border-radius:8px;box-shadow:0px 1px 4px rgba(0, 0, 0, 0.14);max-width:calc(100vw - 32px);min-width:260px;padding:12px 8px;position:absolute;top:56px;z-index:1000;right:0;}@media (max-width: 479px){.style-1kuoxdt{right:16px;}}</style><style data-emotion="style-global 1gx6mxz" data-s="">.style-1gx6mxz{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:16px;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24;height:16px;overflow:hidden;width:16px;}</style><style data-emotion="style-global 1hyfx7x" data-s="">.style-1hyfx7x{display:none;}</style><style data-emotion="style-global o5vjsc" data-s="">.style-o5vjsc{display:none;margin:8px auto 0;width:calc(100vw - 32px);position:relative;}</style><style data-emotion="style-global 1wc0yei" data-s="">.style-1wc0yei{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;background-color:var(--color-surface);}</style><style data-emotion="style-global ghw6r8" data-s="">.style-ghw6r8{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:var(--font-size-body-2);font-weight:600;overflow-x:scroll;max-width:1656px;padding:0 32px;width:100%;scrollbar-width:none;}.style-ghw6r8::-webkit-scrollbar{display:none;}@media (max-width: 769px){.style-ghw6r8{padding:0 16px;}}</style><style data-emotion="style-global 1j8ee9d" data-s="">.style-1j8ee9d{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;color:var(--color-text-medium-emphasis);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;position:relative;white-space:nowrap;padding:8px 16px;}.style-1j8ee9d:hover{color:var(--color-text-high-emphasis);-webkit-text-decoration:none;text-decoration:none;}</style><style data-emotion="style-global 12x49qu" data-s="">.style-12x49qu{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;background:var(--color-yellow-10);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:var(--font-size-body-2);-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;line-height:var(--line-height-body-dense);padding:8px 32px;}@media (max-width: 769px){.style-12x49qu{padding-left:16px;padding-right:8px;}}</style><style data-emotion="style-global qjr4s4" data-s="">.style-qjr4s4{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:20px;font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24;height:20px;overflow:hidden;width:20px;color:var(--color-yellow-60);margin-right:4px;}@media (max-width: 769px){.style-qjr4s4{display:none;}}</style><style data-emotion="style-global u5qdud" data-s="">.style-u5qdud{background:transparent;color:var(--color-text-medium-emphasis);display:grid;padding:8px;position:absolute;right:8px;}@media (max-width: 769px){.style-u5qdud{position:relative;right:0;}}</style><style data-emotion="style-global 1vy2f60" data-s="">.style-1vy2f60{display:inline-block;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-size:16px;font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;height:16px;overflow:hidden;width:16px;}</style><style data-emotion="style" data-s=""></style><style data-emotion="style" data-s=""></style><script src="./awkコマンドの基本 - Qiita_files/bookmark_button.js.download"></script><script>MathJax = {
+    startup: {
+      typeset: false
+    },
+    tex: {
+      inlineMath: [['$', '$']],
+      displayMath: [['$$', '$$']],
+      processEscapes: true,
+      processEnvironments: false,
+      processRefs: false,
+      autoload: {
+        color: [],
+        colorv2: ['color'],
+        html: []
+      },
+      packages: {'[+]': ['noerrors']},
+      require: {
+        allow: {
+          html: false,
+        }
+      }
+    },
+    options: {
+      skipHtmlTags: ['script','noscript','style','textarea','pre','code','a','h1','h2','h3','h4','h5','h6'],
+      ignoreHtmlClass: 'tex2jax_ignore',
+      processHtmlClass: 'tex2jax_process'
+    },
+    loader: {
+      load: [
+        '[tex]/noerrors',
+        'ui/safe'
+      ]
+    }
+  }</script><script src="./awkコマンドの基本 - Qiita_files/tex-chtml.js.download" id="MathJax-script"></script><script src="./awkコマンドの基本 - Qiita_files/bookmark_button.js.download"></script><script src="./awkコマンドの基本 - Qiita_files/lift_widget.js.download"></script><style data-emotion="style 1j4haez 1f27srl" data-s="">.style-1j4haez{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;background-color:transparent;border:none;color:var(--color-text-medium-emphasis);cursor:pointer;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;font-size:20px;height:32px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding:0;width:32px;}.style-1f27srl{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-appearance:none;-moz-appearance:none;-ms-appearance:none;appearance:none;background-color:transparent;border:none;border-radius:50%;color:var(--color-text-medium-emphasis);display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;height:44px;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;padding:0;width:44px;}.style-1f27srl:active{background-color:var(--color-surface-variant);}@media (hover: hover) and (pointer: fine){.style-1f27srl:hover{background-color:var(--color-surface-variant);}}</style><style data-emotion="style fv3lde" data-s="">.style-fv3lde{-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;}</style><script src="./awkコマンドの基本 - Qiita_files/noerrors.js.download" charset="UTF-8"></script><script src="./awkコマンドの基本 - Qiita_files/safe.js.download" charset="UTF-8"></script><style type="text/css">.CtxtMenu_InfoClose {  top:.2em; right:.2em;}
+.CtxtMenu_InfoContent {  overflow:auto; text-align:left; font-size:80%;  padding:.4em .6em; border:1px inset; margin:1em 0px;  max-height:20em; max-width:30em; background-color:#EEEEEE;  white-space:normal;}
+.CtxtMenu_Info.CtxtMenu_MousePost {outline:none;}
+.CtxtMenu_Info {  position:fixed; left:50%; width:auto; text-align:center;  border:3px outset; padding:1em 2em; background-color:#DDDDDD;  color:black;  cursor:default; font-family:message-box; font-size:120%;  font-style:normal; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 15px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius:15px;               /* Safari and Chrome */  -moz-border-radius:15px;                  /* Firefox */  -khtml-border-radius:15px;                /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */  filter:progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color="gray", Positive="true"); /* IE */}
+</style><style type="text/css">.CtxtMenu_MenuClose {  position:absolute;  cursor:pointer;  display:inline-block;  border:2px solid #AAA;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  font-family: "Courier New", Courier;  font-size:24px;  color:#F0F0F0}
+.CtxtMenu_MenuClose span {  display:block; background-color:#AAA; border:1.5px solid;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  line-height:0;  padding:8px 0 6px     /* may need to be browser-specific */}
+.CtxtMenu_MenuClose:hover {  color:white!important;  border:2px solid #CCC!important}
+.CtxtMenu_MenuClose:hover span {  background-color:#CCC!important}
+.CtxtMenu_MenuClose:hover:focus {  outline:none}
+</style><style type="text/css">.CtxtMenu_Menu {  position:absolute;  background-color:white;  color:black;  width:auto; padding:5px 0px;  border:1px solid #CCCCCC; margin:0; cursor:default;  font: menu; text-align:left; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 5px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius: 5px;             /* Safari and Chrome */  -moz-border-radius: 5px;                /* Firefox */  -khtml-border-radius: 5px;              /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */}
+.CtxtMenu_MenuItem {  padding: 1px 2em;  background:transparent;}
+.CtxtMenu_MenuArrow {  position:absolute; right:.5em; padding-top:.25em; color:#666666;  font-family: null; font-size: .75em}
+.CtxtMenu_MenuActive .CtxtMenu_MenuArrow {color:white}
+.CtxtMenu_MenuArrow.CtxtMenu_RTL {left:.5em; right:auto}
+.CtxtMenu_MenuCheck {  position:absolute; left:.7em;  font-family: null}
+.CtxtMenu_MenuCheck.CtxtMenu_RTL { right:.7em; left:auto }
+.CtxtMenu_MenuRadioCheck {  position:absolute; left: .7em;}
+.CtxtMenu_MenuRadioCheck.CtxtMenu_RTL {  right: .7em; left:auto}
+.CtxtMenu_MenuInputBox {  padding-left: 1em; right:.5em; color:#666666;  font-family: null;}
+.CtxtMenu_MenuInputBox.CtxtMenu_RTL {  left: .1em;}
+.CtxtMenu_MenuComboBox {  left:.1em; padding-bottom:.5em;}
+.CtxtMenu_MenuSlider {  left: .1em;}
+.CtxtMenu_SliderValue {  position:absolute; right:.1em; padding-top:.25em; color:#333333;  font-size: .75em}
+.CtxtMenu_SliderBar {  outline: none; background: #d3d3d3}
+.CtxtMenu_MenuLabel {  padding: 1px 2em 3px 1.33em;  font-style:italic}
+.CtxtMenu_MenuRule {  border-top: 1px solid #DDDDDD;  margin: 4px 3px;}
+.CtxtMenu_MenuDisabled {  color:GrayText}
+.CtxtMenu_MenuActive {  background-color: #606872;  color: white;}
+.CtxtMenu_MenuDisabled:focus {  background-color: #E8E8E8}
+.CtxtMenu_MenuLabel:focus {  background-color: #E8E8E8}
+.CtxtMenu_ContextMenu:focus {  outline:none}
+.CtxtMenu_ContextMenu .CtxtMenu_MenuItem:focus {  outline:none}
+.CtxtMenu_SelectionMenu {  position:relative; float:left;  border-bottom: none; -webkit-box-shadow:none; -webkit-border-radius:0px; }
+.CtxtMenu_SelectionItem {  padding-right: 1em;}
+.CtxtMenu_Selection {  right: 40%; width:50%; }
+.CtxtMenu_SelectionBox {  padding: 0em; max-height:20em; max-width: none;  background-color:#FFFFFF;}
+.CtxtMenu_SelectionDivider {  clear: both; border-top: 2px solid #000000;}
+.CtxtMenu_Menu .CtxtMenu_MenuClose {  top:-10px; left:-10px}
+</style><meta http-equiv="origin-trial" content="AymqwRC7u88Y4JPvfIF2F37QKylC04248hLCdJAsh8xgOfe/dVJPV3XS3wLFca1ZMVOtnBfVjaCMTVudWM//5g4AAAB7eyJvcmlnaW4iOiJodHRwczovL3d3dy5nb29nbGV0YWdtYW5hZ2VyLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A+xK4jmZTgh1KBVry/UZKUE3h6Dr9HPPioFS4KNCzify+KEoOii7z/goKS2zgbAOwhpZ1GZllpdz7XviivJM9gcAAACFeyJvcmlnaW4iOiJodHRwczovL3d3dy5nb29nbGV0YWdtYW5hZ2VyLmNvbTo0NDMiLCJmZWF0dXJlIjoiQXR0cmlidXRpb25SZXBvcnRpbmdDcm9zc0FwcFdlYiIsImV4cGlyeSI6MTcwNzI2Mzk5OSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="AymqwRC7u88Y4JPvfIF2F37QKylC04248hLCdJAsh8xgOfe/dVJPV3XS3wLFca1ZMVOtnBfVjaCMTVudWM//5g4AAAB7eyJvcmlnaW4iOiJodHRwczovL3d3dy5nb29nbGV0YWdtYW5hZ2VyLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1RoaXJkUGFydHkiOnRydWV9"><style id="MJX-CHTML-styles">
+mjx-container[jax="CHTML"] {
+  line-height: 0;
+}
+
+mjx-container [space="1"] {
+  margin-left: .111em;
+}
+
+mjx-container [space="2"] {
+  margin-left: .167em;
+}
+
+mjx-container [space="3"] {
+  margin-left: .222em;
+}
+
+mjx-container [space="4"] {
+  margin-left: .278em;
+}
+
+mjx-container [space="5"] {
+  margin-left: .333em;
+}
+
+mjx-container [rspace="1"] {
+  margin-right: .111em;
+}
+
+mjx-container [rspace="2"] {
+  margin-right: .167em;
+}
+
+mjx-container [rspace="3"] {
+  margin-right: .222em;
+}
+
+mjx-container [rspace="4"] {
+  margin-right: .278em;
+}
+
+mjx-container [rspace="5"] {
+  margin-right: .333em;
+}
+
+mjx-container [size="s"] {
+  font-size: 70.7%;
+}
+
+mjx-container [size="ss"] {
+  font-size: 50%;
+}
+
+mjx-container [size="Tn"] {
+  font-size: 60%;
+}
+
+mjx-container [size="sm"] {
+  font-size: 85%;
+}
+
+mjx-container [size="lg"] {
+  font-size: 120%;
+}
+
+mjx-container [size="Lg"] {
+  font-size: 144%;
+}
+
+mjx-container [size="LG"] {
+  font-size: 173%;
+}
+
+mjx-container [size="hg"] {
+  font-size: 207%;
+}
+
+mjx-container [size="HG"] {
+  font-size: 249%;
+}
+
+mjx-container [width="full"] {
+  width: 100%;
+}
+
+mjx-box {
+  display: inline-block;
+}
+
+mjx-block {
+  display: block;
+}
+
+mjx-itable {
+  display: inline-table;
+}
+
+mjx-row {
+  display: table-row;
+}
+
+mjx-row > * {
+  display: table-cell;
+}
+
+mjx-mtext {
+  display: inline-block;
+}
+
+mjx-mstyle {
+  display: inline-block;
+}
+
+mjx-merror {
+  display: inline-block;
+  color: red;
+  background-color: yellow;
+}
+
+mjx-mphantom {
+  visibility: hidden;
+}
+
+_::-webkit-full-page-media, _:future, :root mjx-container {
+  will-change: opacity;
+}
+
+mjx-assistive-mml {
+  position: absolute !important;
+  top: 0px;
+  left: 0px;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 1px 0px 0px 0px !important;
+  border: 0px !important;
+  display: block !important;
+  width: auto !important;
+  overflow: hidden !important;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+mjx-assistive-mml[display="block"] {
+  width: 100% !important;
+}
+
+mjx-c::before {
+  display: block;
+  width: 0;
+}
+
+.MJX-TEX {
+  font-family: MJXZERO, MJXTEX;
+}
+
+.TEX-B {
+  font-family: MJXZERO, MJXTEX-B;
+}
+
+.TEX-I {
+  font-family: MJXZERO, MJXTEX-I;
+}
+
+.TEX-MI {
+  font-family: MJXZERO, MJXTEX-MI;
+}
+
+.TEX-BI {
+  font-family: MJXZERO, MJXTEX-BI;
+}
+
+.TEX-S1 {
+  font-family: MJXZERO, MJXTEX-S1;
+}
+
+.TEX-S2 {
+  font-family: MJXZERO, MJXTEX-S2;
+}
+
+.TEX-S3 {
+  font-family: MJXZERO, MJXTEX-S3;
+}
+
+.TEX-S4 {
+  font-family: MJXZERO, MJXTEX-S4;
+}
+
+.TEX-A {
+  font-family: MJXZERO, MJXTEX-A;
+}
+
+.TEX-C {
+  font-family: MJXZERO, MJXTEX-C;
+}
+
+.TEX-CB {
+  font-family: MJXZERO, MJXTEX-CB;
+}
+
+.TEX-FR {
+  font-family: MJXZERO, MJXTEX-FR;
+}
+
+.TEX-FRB {
+  font-family: MJXZERO, MJXTEX-FRB;
+}
+
+.TEX-SS {
+  font-family: MJXZERO, MJXTEX-SS;
+}
+
+.TEX-SSB {
+  font-family: MJXZERO, MJXTEX-SSB;
+}
+
+.TEX-SSI {
+  font-family: MJXZERO, MJXTEX-SSI;
+}
+
+.TEX-SC {
+  font-family: MJXZERO, MJXTEX-SC;
+}
+
+.TEX-T {
+  font-family: MJXZERO, MJXTEX-T;
+}
+
+.TEX-V {
+  font-family: MJXZERO, MJXTEX-V;
+}
+
+.TEX-VB {
+  font-family: MJXZERO, MJXTEX-VB;
+}
+
+mjx-stretchy-v mjx-c, mjx-stretchy-h mjx-c {
+  font-family: MJXZERO, MJXTEX-S1, MJXTEX-S4, MJXTEX, MJXTEX-A ! important;
+}
+
+@font-face /* 0 */ {
+  font-family: MJXZERO;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Zero.woff") format("woff");
+}
+
+@font-face /* 1 */ {
+  font-family: MJXTEX;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff") format("woff");
+}
+
+@font-face /* 2 */ {
+  font-family: MJXTEX-B;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff") format("woff");
+}
+
+@font-face /* 3 */ {
+  font-family: MJXTEX-I;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff") format("woff");
+}
+
+@font-face /* 4 */ {
+  font-family: MJXTEX-MI;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff") format("woff");
+}
+
+@font-face /* 5 */ {
+  font-family: MJXTEX-BI;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff") format("woff");
+}
+
+@font-face /* 6 */ {
+  font-family: MJXTEX-S1;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff") format("woff");
+}
+
+@font-face /* 7 */ {
+  font-family: MJXTEX-S2;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff") format("woff");
+}
+
+@font-face /* 8 */ {
+  font-family: MJXTEX-S3;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff") format("woff");
+}
+
+@font-face /* 9 */ {
+  font-family: MJXTEX-S4;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff") format("woff");
+}
+
+@font-face /* 10 */ {
+  font-family: MJXTEX-A;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff") format("woff");
+}
+
+@font-face /* 11 */ {
+  font-family: MJXTEX-C;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff") format("woff");
+}
+
+@font-face /* 12 */ {
+  font-family: MJXTEX-CB;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff") format("woff");
+}
+
+@font-face /* 13 */ {
+  font-family: MJXTEX-FR;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff") format("woff");
+}
+
+@font-face /* 14 */ {
+  font-family: MJXTEX-FRB;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff") format("woff");
+}
+
+@font-face /* 15 */ {
+  font-family: MJXTEX-SS;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff") format("woff");
+}
+
+@font-face /* 16 */ {
+  font-family: MJXTEX-SSB;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff") format("woff");
+}
+
+@font-face /* 17 */ {
+  font-family: MJXTEX-SSI;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff") format("woff");
+}
+
+@font-face /* 18 */ {
+  font-family: MJXTEX-SC;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff") format("woff");
+}
+
+@font-face /* 19 */ {
+  font-family: MJXTEX-T;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff") format("woff");
+}
+
+@font-face /* 20 */ {
+  font-family: MJXTEX-V;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff") format("woff");
+}
+
+@font-face /* 21 */ {
+  font-family: MJXTEX-VB;
+  src: url("https://cdn.qiita.com/MathJax/3.2.2/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff") format("woff");
+}
+</style><style type="text/css">#logly-lift-4279494 #logly-lift-widget {
+  
+  width: 100%;
+  
+  
+  
+  clear: both;
+}
+
+#logly-lift-4279494 #logly-lift-widget-label {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  
+  border-bottom-color: #5C97FF;
+  
+}
+
+#logly-lift-4279494 #logly-lift-widget-label-caption {
+  padding: 5px 10px;
+  
+  background-color: #5C97FF;
+  
+  float: left;
+}
+
+#logly-lift-4279494 #logly-lift-widget-label-caption a {
+  
+  color: #FFFFFF;
+  
+  
+  text-decoration: none;
+}
+
+#logly-lift-4279494 .logly-lift-ad {
+  display: inline-block;
+  zoom: 1;
+  vertical-align:top;
+  
+  width: 100%;
+  
+  margin: 5px 0;
+  padding: 0;
+}
+
+
+
+#logly-lift-4279494 .logly-lift-ad-image {
+  
+  vertical-align: top;
+  width: 120px;
+  height: 90px;
+  padding-right: 0;
+}
+
+#logly-lift-4279494 .logly-lift-ad-image-inner {
+  position: relative;
+  overflow: hidden;
+  width: 120px;
+  height: 90px;
+}
+
+#logly-lift-4279494 .logly-lift-ad-image-inner a {
+  display: block;
+  height: 100%;
+}
+
+#logly-lift-4279494 .logly-lift-ad-image-inner a .logly-lift-ad-img-inner {
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+}
+
+#logly-lift-4279494 .logly-lift-ad-content {
+  
+  word-break: break-all;
+}
+
+
+
+#logly-lift-4279494 .logly-lift-ad-title {
+  
+  
+}
+
+
+
+#logly-lift-4279494 .logly-lift-ad-lead {
+  
+  
+}
+
+
+
+#logly-lift-4279494 a.logly-lift-ad-site {
+  
+  
+}
+
+
+
+
+
+#logly-lift-4279494 .logly-lift-ad-disclosure {
+  
+  
+  
+  text-align: left;
+  
+}
+
+#logly-lift-4279494 .logly-lift-ad-disclosure a {
+  
+  
+  color: #999999;
+  
+}
+
+#logly-lift-4279494 .logly-lift-clear {
+  clear: both;
+}
+
+
+
+#logly-lift-4279494 .ie-lte9 .logly-lift-ad {
+  display: inline;
+}
+
+#logly-lift-toaster .logly-lift-credit,
+#logly-lift-4279494 .logly-lift-credit {
+  clear:both;
+  padding:0 8px 10px;
+  text-align:right;
+}
+
+#logly-lift-toaster .logly-lift-credit {
+  padding-right:0;
+}
+
+#logly-lift-toaster .logly-lift-credit a,
+#logly-lift-4279494 .logly-lift-credit a {
+  color: #999;
+  text-decoration: none;
+  font-size:13px;
+}
+
+#logly-lift-toaster .logly-lift-credit a .logly-lift-credit-logo,
+#logly-lift-4279494 .logly-lift-credit a .logly-lift-credit-logo {
+  display:inline-block;
+  background: url('https://cdn.logly.co.jp/spritesource-s5c12c753d2.webp') no-repeat 0 -103px;
+  color:transparent;
+  margin-left:3px;
+  width:36px;
+  height:14px;
+  vertical-align:middle;
+  *display:inline;
+  *zoom:1;
+}
+
+#logly-lift-toaster .logly-lift-credit a:hover .logly-lift-credit-logo,
+#logly-lift-4279494 .logly-lift-credit a:hover .logly-lift-credit-logo {
+  background: url('https://cdn.logly.co.jp/spritesource-s5c12c753d2.webp') no-repeat 0 -117px;
+}
+
+#logly-lift-toaster .logly-lift-credit2 a .logly-lift-credit-logo,
+#logly-lift-4279494 .logly-lift-credit2 a .logly-lift-credit-logo,
+#logly-lift-toaster .logly-lift-credit2 a:hover .logly-lift-credit-logo,
+#logly-lift-4279494 .logly-lift-credit2 a:hover .logly-lift-credit-logo,
+#logly-lift-modal-contents-inner h3 {
+  background-image: url('https://cdn.logly.co.jp/spritesource-v74j50a002.webp');
+  background-repeat: no-repeat;
+}
+
+#logly-lift-toaster .logly-lift-credit2 a .logly-lift-credit-logo,
+#logly-lift-4279494 .logly-lift-credit2 a .logly-lift-credit-logo {
+  background-position: 0 -110px;
+  height: 14px;
+  width: 68px;
+}
+
+#logly-lift-toaster .logly-lift-credit2 a:hover .logly-lift-credit-logo,
+#logly-lift-4279494 .logly-lift-credit2 a:hover .logly-lift-credit-logo {
+  background-position: 0 -196px;
+  height: 14px;
+  width: 68px;
+}
+#logly-lift-modal-contents-inner h3 {
+  background-position: 0 -232px;
+  height: 40px;
+  width: 194px;
+}
+
+#logly-lift-toaster .logly-lift-credit2 {
+  padding-right: 0;
+}
+#logly-lift-toaster .logly-lift-credit2,
+#logly-lift-4279494 .logly-lift-credit2 {
+  clear: both;
+  padding: 0 8px 10px;
+  text-align: right;
+}
+#logly-lift-toaster .logly-lift-credit2 a,
+#logly-lift-4279494 .logly-lift-credit2 a {
+  color: #999;
+  text-decoration: none;
+  font-size: 11px;
+}
+#logly-lift-toaster .logly-lift-credit2 a .logly-lift-credit-logo,
+#logly-lift-4279494 .logly-lift-credit2 a .logly-lift-credit-logo {
+  display: inline-block;
+  color: transparent;
+  margin-left: 3px;
+  vertical-align: middle;
+  margin-top: -2px;
+}
+@media only screen and (-webkit-min-device-pixel-ratio: 2),
+only screen and (min-device-pixel-ratio: 2),
+(min-resolution: 2dppx) {
+  #logly-lift-toaster .logly-lift-credit2 a .logly-lift-credit-logo,
+  #logly-lift-4279494 .logly-lift-credit2 a .logly-lift-credit-logo {
+    display: inline-block;
+    background-position: 0 -62px;
+    height: 14px;
+    width: 68px;
+    background-size: 106px 136px;
+  }
+}
+@media only screen and (-webkit-min-device-pixel-ratio: 2),
+only screen and (min-device-pixel-ratio: 2),
+(min-resolution: 2dppx) {
+  #logly-lift-toaster .logly-lift-credit2 a:hover .logly-lift-credit-logo,
+  #logly-lift-4279494 .logly-lift-credit2 a:hover .logly-lift-credit-logo {
+    display: inline-block;
+    background-position: 0 -62px;
+    height: 14px;
+    width: 68px;
+    background-size: 106px 136px;
+  }
+}
+
+#logly-lift-4279494 .logly-lift-widget-video-content {
+  padding: 20px;
+  background: #fff;
+}
+
+#logly-lift-4279494 .logly-lift-video {
+  width: auto;
+  height: auto;
+  margin: 0 -20px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.17);
+}
+
+#logly-lift-4279494 .logly-lift-video-header {
+  padding-bottom: 15px;
+}
+
+#logly-lift-4279494 .logly-lift-video-footer {
+  padding-top: 15px;
+}
+
+#logly-lift-4279494 .logly-lift-video-header .logly-lift-video-headerlink,
+#logly-lift-4279494 .logly-lift-video-footer .logly-lift-video-footerlink {
+  display: block;
+  text-decoration: none;
+}
+
+#logly-lift-4279494 .logly-lift-video-header .logly-lift-video-headerlink::after,
+#logly-lift-4279494 .logly-lift-video-footer .logly-lift-video-footerlink::after {
+  content: "";
+  display: block;
+  clear:both;
+}
+
+#logly-lift-4279494 .logly-lift-video-title {
+  font-size: 16px;
+  line-height: 25px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+#logly-lift-4279494 .logly-lift-video-adv {
+  font-size: 11px;
+  line-height: 1;
+  color: #CCC;
+  text-align: right;
+}
+
+#logly-lift-4279494 .logly-lift-video-cv {
+  display: block;
+  text-align: center;
+  background: #4285f4;
+  color: #FFF;
+  border-radius: 3px;
+}
+
+#logly-lift-4279494 .logly-lift-video-cv:hover {
+  opacity: 0.85;
+}
+
+/* type-1 */
+#logly-lift-4279494 .logly-lift-video-type-1 .logly-lift-video-footer .logly-lift-video-title,
+#logly-lift-4279494 .logly-lift-video-type-1 .logly-lift-video-header .logly-lift-video-adv {
+  display: none;
+}
+
+#logly-lift-4279494 .logly-lift-video-type-1 .logly-lift-video-footer .logly-lift-video-adv {
+  text-align: left;
+}
+
+#logly-lift-4279494 .logly-lift-video-type-1 .logly-lift-video-footer .logly-lift-video-cv {
+  float: right;
+  padding: 3px 20px;
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+#logly-lift-4279494 .logly-lift-video-type-1 .logly-lift-video-footer .logly-lift-video-cv::before {
+  content: "詳細を見る";
+}
+
+{{! #9951 }}
+#logly-lift-4279494 .compass-fit-video-type-1 .compass-fit-video-footer .compass-fit-video-cv::before {
+  content: "點我了解詳情";
+}
+
+
+  /*
+---
+name: Login
+category: LoglyFeed/Login
+---
+
+To reflect this design, you must copy and paste it to https://www.logly.co.jp design settings
+
+
+!![](LoglyFeed/Login.html)
+*/
+
+#logly-lift-4279494 #logly-lift-widget-header {
+  font-size: 16px;
+  margin-bottom: 12px;
+  font-weight: 400;
+  font-feature-settings: "palt";
+  position: relative;
+}
+
+#logly-lift-4279494 #logly-lift-widget-content {
+  display: block;
+  flex-wrap: wrap;
+}
+
+#logly-lift-4279494 .logly-lift-ad {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e8e8e8;
+  margin: 0;
+  padding: 16px;
+}
+
+#logly-lift-4279494 .logly-lift-ad:first-child {
+  border-top: 1px solid #e8e8e8;
+}
+
+#logly-lift-4279494 .logly-lift-ad .fa {
+  color: #55c500;
+  font-size: 40px;
+}
+
+#logly-lift-4279494 .logly-lift-ad .fa-fw {
+  width: 40px;
+  height: 40px;
+  text-align: left;
+}
+
+#logly-lift-4279494 .logly-lift-ad-icon {
+  overflow: hidden;
+  border-radius: 0.2em;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+#logly-lift-4279494 .logly-lift-ad-icon img {
+  width: 100%;
+  height: 100%;
+}
+
+#logly-lift-4279494 .logly-lift-ad-content {
+  display: block;
+}
+
+#logly-lift-4279494 .logly-lift-ad-link {
+  margin-right: 8px;
+}
+
+#logly-lift-4279494 .logly-lift-ad-title {
+  display: inline-block;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  word-wrap: break-word;
+  word-break: break-all;
+  margin-left: 8px;
+}
+
+#logly-lift-4279494 .logly-lift-ad-title:visited {
+  color: #777;
+}
+
+#logly-lift-4279494 .logly-lift-ad-link:hover .logly-lift-ad-title {
+  text-decoration: underline;
+}
+
+#logly-lift-4279494 .logly-lift-ad-author {
+  display: block;
+  color: #999;
+  margin-left: 8px;
+  font-size: 0.9rem;
+}
+
+#logly-lift-4279494 .logly-lift-ad-adv {
+  display: block;
+  color: #999;
+  margin-left: 8px;
+  font-size: 0.9rem;
+}
+
+
+
+</style></head><body bis_register="W3sibWFzdGVyIjp0cnVlLCJleHRlbnNpb25JZCI6ImVwcGlvY2VtaG1ubGJoanBsY2drb2ZjaWllZ29tY29uIiwiYWRibG9ja2VyU3RhdHVzIjp7IkRJU1BMQVkiOiJkaXNhYmxlZCIsIkZBQ0VCT09LIjoiZGlzYWJsZWQiLCJUV0lUVEVSIjoiZGlzYWJsZWQiLCJSRURESVQiOiJkaXNhYmxlZCJ9LCJ2ZXJzaW9uIjoiMS45LjEwIiwic2NvcmUiOjEwOTEwfV0=" data-new-gr-c-s-check-loaded="14.1117.0" data-gr-ext-installed=""><iframe src="./awkコマンドの基本 - Qiita_files/multi-sync.html" scrolling="no" style="display: none; border: none;"></iframe><iframe src="./awkコマンドの基本 - Qiita_files/sync.html" scrolling="no" style="display: none; border: none;"></iframe><div class="allWrapper" bis_skin_checked="1"><div id="GlobalHeader-react-component-a4f94f16-4709-46a7-8cab-2d2522f24ef4" bis_skin_checked="1"><header class="style-1cnt4b8"><div class="style-ymuwam" bis_skin_checked="1"><div class="style-fv3lde" bis_skin_checked="1"><a href="https://qiita.com/" class="style-1w2cgjr"><svg viewBox="0 0 426.57 130"><circle cx="167.08" cy="21.4" r="12.28"></circle><path d="M250.81 29.66h23.48v18.9h-23.48z"></path><path d="M300.76 105.26a22.23 22.23 0 01-6.26-.86 12.68 12.68 0 01-5.17-3 14.41 14.41 0 01-3.56-5.76 28 28 0 01-1.3-9.22V48.56h29.61v-18.9h-29.52V3.29h-20.17v83.34q0 11.16 2.83 18.27a27.71 27.71 0 007.7 11.2 26.86 26.86 0 0011.43 5.62 47.56 47.56 0 0012.34 1.53h15.16v-18zM0 61.7a58.6 58.6 0 015-24.21A62.26 62.26 0 0118.73 17.9 63.72 63.72 0 0139 4.78 64.93 64.93 0 0164 0a65 65 0 0124.85 4.78 64.24 64.24 0 0120.38 13.12A62 62 0 01123 37.49a58.6 58.6 0 015 24.21 58.34 58.34 0 01-4 21.46 62.8 62.8 0 01-10.91 18.16l11.1 11.1a10.3 10.3 0 010 14.52 10.29 10.29 0 01-14.64 0l-12.22-12.41a65 65 0 01-15.78 6.65 66.32 66.32 0 01-17.55 2.3 64.63 64.63 0 01-45.23-18A62.82 62.82 0 015 85.81 58.3 58.3 0 010 61.7zm21.64.08a43.13 43.13 0 0012.42 30.63 42.23 42.23 0 0013.43 9.09A41.31 41.31 0 0064 104.8a42 42 0 0030-12.39 42.37 42.37 0 009-13.64 43.43 43.43 0 003.3-17 43.77 43.77 0 00-3.3-17A41.7 41.7 0 0080.55 22 41.78 41.78 0 0064 18.68 41.31 41.31 0 0047.49 22a42.37 42.37 0 00-13.43 9.08 43.37 43.37 0 00-12.42 30.7zM331.89 78a47.59 47.59 0 013.3-17.73 43.22 43.22 0 019.34-14.47A44.25 44.25 0 01359 36a47.82 47.82 0 0118.81-3.58 42.72 42.72 0 019.26 1 46.5 46.5 0 018.22 2.58 40 40 0 017 3.84 44.39 44.39 0 015.71 4.63l1.22-9.47h17.35v85.83h-17.35l-1.17-9.42a42.54 42.54 0 01-5.84 4.67 43.11 43.11 0 01-7 3.79 44.86 44.86 0 01-8.17 2.59 43 43 0 01-9.22 1A47.94 47.94 0 01359 119.9a43.3 43.3 0 01-14.47-9.71 44.17 44.17 0 01-9.34-14.47 47 47 0 01-3.3-17.72zm20.27-.08a29.16 29.16 0 002.17 11.34 27 27 0 005.92 8.88 26.69 26.69 0 008.76 5.76 29.19 29.19 0 0021.44 0 26.11 26.11 0 008.72-5.76 27.57 27.57 0 005.88-8.84 29 29 0 002.16-11.38 28.62 28.62 0 00-2.16-11.22 26.57 26.57 0 00-5.93-8.8 27.68 27.68 0 00-19.51-7.9 28.29 28.29 0 00-10.77 2.05 26.19 26.19 0 00-8.71 5.75 27.08 27.08 0 00-5.84 8.8 28.94 28.94 0 00-2.13 11.31zm-194.97-30.5h19.78v73.54h-19.78zm49.25 0h19.78v73.54h-19.78z"></path><circle cx="216.33" cy="21.4" r="12.28"></circle></svg></a></div><div class="style-fv3lde" bis_skin_checked="1"><form action="https://qiita.com/search" method="get" class="style-68a7fl"><span class="material-symbols-outlined style-1vvcx1l" aria-hidden="true">search</span><input type="search" autocomplete="off" placeholder="記事、質問を検索" value="" name="q" required="" class="style-7sxcw7"></form><button class="style-1glor0y"><span class="material-symbols-outlined style-1j8uoc8" aria-label="記事、質問を検索">search</span></button><div class="style-3kxxd" bis_skin_checked="1"><button tabindex="0" class="style-1okrzp8"><span class="material-symbols-outlined style-16hp9px" aria-label="通知">notifications</span></button></div><div class="style-3kxxd" bis_skin_checked="1"><button tabindex="0" class="style-10c3e3s"><img loading="lazy" src="./awkコマンドの基本 - Qiita_files/20800131" alt="Toru52"></button><div class="style-1hu8bjh" bis_skin_checked="1"><a href="https://qiita.com/Toru52" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">person</span>マイページ</a><a href="https://qiita.com/badges" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">military_tech</span>獲得したバッジ</a><a href="https://qiita.com/stock" class="style-6cmdul"><svg class="style-lbfh2g" height="32" viewBox="0 0 32 32" width="32"><path d="m24 5h-16a2 2 0 0 0 -2 2v12a9 9 0 0 0 9 9h2a9 9 0 0 0 9-9v-12a2 2 0 0 0 -2-2zm-2.85 9.35-5.8 5.8a.5.5 0 0 1 -.7 0l-3.8-3.8a.5.5 0 0 1 0-.7l.8-.8a.5.5 0 0 1 .7 0l2.47 2.47a.25.25 0 0 0 .36 0l4.47-4.47a.5.5 0 0 1 .7 0l.8.8a.5.5 0 0 1 0 .7z"></path></svg>ストックした記事</a><hr class="style-11uvxb7"><a href="https://qiita.com/drafts/new" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">note_add</span>記事を新規作成</a><a href="https://qiita.com/questions/new" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">note_add</span>質問を新規作成</a><a href="https://qiita.com/drafts" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">edit_note</span>下書き一覧</a><a href="https://qiita.com/Toru52/private" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">lock</span>限定共有記事</a><a href="https://qiita.com/patches" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">fork_right</span>編集リクエスト</a><hr class="style-11uvxb7"><a href="https://qiita.com/settings/account" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">settings</span>設定</a><button tabindex="0" class="style-6cmdul"><span class="material-symbols-outlined style-uah80t" aria-hidden="true">logout</span>ログアウト</button><hr class="style-11uvxb7"><p class="style-sjtn0x">Qiita 関連サービス</p><a href="https://github.com/increments/qiita-cli" target="_blank" rel="noopener noreferrer" class="style-6cmdul">Qiita CLI (β)<span class="material-symbols-outlined style-uah80t" aria-hidden="true">open_in_new</span></a></div></div><div class="style-komn7u" bis_skin_checked="1"><button font-size="14" class="style-tyeip2">投稿する<span class="material-symbols-outlined style-ib3052" aria-hidden="true">edit</span></button><div class="style-1kuoxdt" bis_skin_checked="1"><a href="https://qiita.com/drafts/new" class="style-6cmdul">記事を新規作成</a><a href="https://qiita.com/questions/new" class="style-6cmdul">質問を新規作成</a><a href="https://qiita.com/drafts" class="style-6cmdul">下書き一覧</a><a href="https://github.com/increments/qiita-cli" target="_blank" rel="noopener noreferrer" class="style-6cmdul">Qiita CLI (β)<span class="material-symbols-outlined style-1gx6mxz" aria-hidden="true">open_in_new</span></a></div></div></div><div class="style-1hyfx7x" bis_skin_checked="1"></div></div><form action="https://qiita.com/search" method="get" class="style-o5vjsc"><span class="material-symbols-outlined style-1vvcx1l" aria-hidden="true">search</span><input type="text" autocomplete="off" placeholder="記事、質問を検索" value="" name="q" required="" class="style-7sxcw7"></form></header><nav class="style-1wc0yei"><div class="style-ghw6r8" bis_skin_checked="1"><a href="https://qiita.com/" class="style-1j8ee9d">ホーム</a><a href="https://qiita.com/timeline" class="style-1j8ee9d">タイムライン</a><a href="https://qiita.com/trend" class="style-1j8ee9d">トレンド</a><a href="https://qiita.com/question-feed" class="style-1j8ee9d">質問</a><a href="https://qiita.com/official-events" class="style-1j8ee9d">公式イベント</a><a href="https://qiita.com/official-columns" class="style-1j8ee9d">公式コラム</a><a href="https://qiita.com/opportunities" class="style-1j8ee9d">募集</a><a href="https://qiita.com/organizations" class="style-1j8ee9d">Organization</a></div></nav><div class="style-12x49qu" bis_skin_checked="1"><span class="material-symbols-outlined style-qjr4s4" aria-hidden="true">warning</span><p>メールアドレスが認証されていません。<a href="https://qiita.com/settings/notifications">メールアドレス設定ページから認証を行ってください。</a></p><button aria-label="閉じる" class="style-u5qdud"><span class="material-symbols-outlined style-1vy2f60" aria-hidden="true">close</span></button></div></div>
+      <script type="application/json" class="js-react-on-rails-component" data-component-name="GlobalHeader" data-dom-id="GlobalHeader-react-component-a4f94f16-4709-46a7-8cab-2d2522f24ef4">{"realms":[{"humanName":"Qiita","isCurrentRealm":true,"isQiita":true,"isQiitaTeam":false,"loggedInUser":{"profileImageUrl":"https://avatars.githubusercontent.com/u/20800131?v=4","urlName":"Toru52"},"teamId":null,"url":"https://qiita.com/"}],"type":null,"isHideGlobalNavigation":false,"isShowTfaDownloadAlert":false}</script>
+      
+<div class="mainWrapper" bis_skin_checked="1"><script type="application/ld+json">{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"/","name":"Qiita"}},{"@type":"ListItem","position":2,"item":{"@id":"/tags/bash","name":"Bash"}}]}</script><script type="application/ld+json">{"@context":"http://schema.org","@type":"Article","datePublished":"2016-03-06T20:03:09.000+09:00","dateModified":"2016-03-14T23:38:39.000+09:00","headline":"awkコマンドの基本","image":"https://qiita-user-contents.imgix.net/https%3A%2F%2Fcdn.qiita.com%2Fassets%2Fpublic%2Farticle-ogp-background-9f5428127621718a910c8b63951390ad.png?ixlib=rb-4.0.0\u0026w=1200\u0026mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTkxNiZ0eHQ9YXdrJUUzJTgyJUIzJUUzJTgzJTlFJUUzJTgzJUIzJUUzJTgzJTg5JUUzJTgxJUFFJUU1JTlGJUJBJUU2JTlDJUFDJnR4dC1jb2xvcj0lMjMyMTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LWNsaXA9ZWxsaXBzaXMmdHh0LWFsaWduPWxlZnQlMkN0b3Amcz1kZGRmMDE5ZjUyNjFmYTE3MDJlOTVjNTNmZjEwMjViOQ\u0026mark-x=142\u0026mark-y=112\u0026blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTYxNiZ0eHQ9JTQweWFtYXpvbiZ0eHQtY29sb3I9JTIzMjEyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnM9ZmZiYTZhYWMyYmEzNWE5NGI4MDJkMWJkYjhiNTc2Y2I\u0026blend-x=142\u0026blend-y=491\u0026blend-mode=normal\u0026s=355929275596cd0b16d9b7b9e34fc979","mainEntityOfPage":"https://qiita.com/yamazon/items/563af1b485ff413d381f","author":{"@type":"Person","address":"Tokyo,Japan","email":null,"identifier":"yamazon","name":"yamazon","image":"https://qiita-user-profile-images.imgix.net/https%3A%2F%2Fqiita-image-store.s3.amazonaws.com%2F0%2F35156%2Fprofile-images%2F1538791621?ixlib=rb-4.0.0\u0026auto=compress%2Cformat\u0026lossless=0\u0026w=75\u0026s=a14599ba69062d4d47842b9be37121d4","url":"https://qiita.com/yamazon","description":"AWS,Docker,Powershell\r\n","memberOf":[]},"publisher":{"@type":"Organization","name":"Qiita","logo":{"@type":"ImageObject","url":"//cdn.qiita.com/assets/public/qiita-logo-c39ded593afa388e2e1ba435b110554e.png"}}}</script><script>td.trackEvent('pageviews_article',{
+    user_id: "3527281",
+    article_id: "375350",
+    article_uuid: "563af1b485ff413d381f",
+    td_description: "&quot;## bashにおけるawkコマンドの基本\n\nawkについて調べながら勉強したので、個人的にまとめてみました\n\nawkは入力として受け取った文字列に対して、フィールド区切り文字やレコード区切り文字を指定して、  \n「列」に対する処理を行うためのコマンドです。また、awk単体としても、1つのプログラムです。  \n\n\u0026amp;lt;/br\u0026amp;gt;\n\n\n## awkの基本書式\n\n```sh\nawk -F\u0026amp;#39;[フィールド区切り文字(複数可能)]\u0026amp;#39; -v \u0026amp;#39;変数=xx\u0026amp;#39; \u0026amp;#39;{awkコマンド}\u0026amp;#39; file\n\n```\n\n* 今回は標準出力を行うawkコマンド「print」を利用し、awkで指定したフィールドを取得します\n\n#### awkで1フィールド目を取り出すコマンドは、「print $1」です\n\n# 1フィールド目を出力 print $1\nオプションである -F\u0026amp;#39;[フィールド区切り文字]\u0026amp;#39;　を指定しない場合、\n区切り文字には、タブまたは半角スペースが選択されます\necho からパイプで渡してみます\n\n\n```sh\necho 1 2 3 4 |awk \u0026amp;#39;{print $1}\u0026amp;#39;\n1\n\n```\n\n## 2フィールド目を出力 print $2\n\n```sh\necho 1 2 3 4 |awk \u0026amp;#39;{print $2}\u0026amp;#39;\n2\n\n```\n\n## $0は「パイプやファイルから渡された、文字列全て」という意味です print $0\nprintのみも、一緒\n\n```sh\necho 1 2 3 4 |awk \u0026amp;#39;{print $0}\u0026amp;#39;\n1 2 3 4\n\necho 1 2 3 4 |awk \u0026amp;#39;{print}\u0026amp;#39;\n1 2 3 4\n\n```\n\n## フィールド区切り文字に「:」を指定してみます\n1フィールド目を出力\n\n```sh\necho 1:2:3:4 |awk -F\u0026amp;#39;[:]\u0026amp;#39; \u0026amp;#39;{print $1}\u0026amp;#39;\n1\n\n```\n\n2フィールド目を出力\n\n```sh\necho 1:2:3:4 |awk -F\u0026amp;#39;[:]\u0026amp;#39; \u0026amp;#39;{print $2}\u0026amp;#39;\n2\n\n```\n\n## フィールド区切り文字は複数指定できます\n\nフィールド区切り文字に「:」と「/」を指定\nならべて書くことで、「:」と「/」の1つ1つがフィールド区切り文字として扱われます\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; \u0026amp;#39;{print $3}\u0026amp;#39;\n3\n\n```\n\n##複数フィールドの出力 print $1,$2\n#### print $1,$2 のようにカンマで区切って記述します\n複数フィールドの出力は、半角スペースで区切られます\nこれは、OFSを指定していないため ※OFSについては後述します\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; \u0026amp;#39;{print $1,$2}\u0026amp;#39;\n1 2\n\n```\n\n## OFS\n「OFS」は、Output Field Separatorの略で、awkの組み込み変数であり、「出力のフィールド区切り文字」を指定します\n下記では「#」を指定し、フィールドの出力を「#」で区切ります\nまた、「-v」 はvariable(変数)を指定する、という意味のオプションです\n\n-v \u0026amp;#39;変数=xx\u0026amp;#39;\nという形式で記述します\n\n-F\u0026amp;#39;[フィールド区切り文字]\u0026amp;#39;で、「入力のフィールド区切り文字」については指定しますが、これは、処理で一番よく使われるためオプション化されているだけ、という違いです。\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; -v \u0026amp;#39;OFS=#\u0026amp;#39; \u0026amp;#39;{print $1,$3}\u0026amp;#39;\n1#3\n\n```\n\n## RS\nRSはRecord Separatorの略で、awkの組み込み変数です\n「入力のレコード区切り文字」を指定、下記では「/」を指定します\nレコードは「/」を区切り文字にして、「1:2」と「3:4」に分けられます\n「/」をレコード区切り文字にして、各々のレコードから1フィールド目を取得します\n出力は改行で区切って出力されます　※これはORSが指定されていないため ORSは下述\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:]\u0026amp;#39; -v \u0026amp;#39;RS=/\u0026amp;#39; \u0026amp;#39;{print $1}\u0026amp;#39;\n1\n3\necho 1:2/3:4 |awk -F\u0026amp;#39;[:]\u0026amp;#39; -v \u0026amp;#39;RS=/\u0026amp;#39; \u0026amp;#39;{print $1,$2}\u0026amp;#39;\n1 2\n3 4\n# フィールド区切り文字とレコード区切り文字で同じ文字がある場合、レコード区切り文字が優先されます\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; -v \u0026amp;#39;RS=/\u0026amp;#39; \u0026amp;#39;{print $1,$2}\u0026amp;#39;\n1 2\n3 4\n\n```\n\n## ORS\n「ORS」は、Output Record Separatorの略で、awkの組み込み変数であり、「出力のレコード区切り文字」を指定します\n下記では「This is ORS」を指定し、レコードの出力を区切ります\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; -v \u0026amp;#39;RS=/\u0026amp;#39; -v \u0026amp;#39;ORS=This is ORS\u0026amp;#39; \u0026amp;#39;{print $1,$2}\u0026amp;#39;\n1 2This is ORS3 4\n\n```\n\n## OFSとORSを明示します\nOFSは空白4つ、ORSは改行2つにしてみます\n\\n は改行\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; -v \u0026amp;#39;OFS=    \u0026amp;#39; -v \u0026amp;#39;RS=/\u0026amp;#39; -v \u0026amp;#39;ORS=\\n\\n\u0026amp;#39; \u0026amp;#39;{print $1,$2}\u0026amp;#39;\n1    2\n\n3    4\n\n\n```\n\n## 最終フィールドを取り出す変数として$NFが用意されています\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; \u0026amp;#39;{print $NF}\u0026amp;#39;\n4\n\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; \u0026amp;#39;{print $NF-1}\u0026amp;#39;\n3\n\n```\n\n## printの他に、printfもつかえます\n\n```sh\necho 1:2/3:4 |awk -F\u0026amp;#39;[:/]\u0026amp;#39; \u0026amp;#39;{printf \u0026amp;quot;%s\\n%s\\n\u0026amp;quot;,$NF,$NF-1}\u0026amp;#39;\n4\n3\n\n```\n\n## 他にも、csv形式を扱う時などに利用する\u0026amp;quot;FPAT\u0026amp;quot;変数などがあります\n参考：http://codezine.jp/article/detail/8323\n&quot;",
+    td_title: "&quot;awkコマンドの基本&quot;"
+  })</script><script>gtag('event', 'pageviews_article', {
+  user_id: "3527281",
+  article_id: "375350",
+  article_uuid: "563af1b485ff413d381f",
+})</script><img style="display:block;margin:0;padding:0;border:0;outline:0;width:0;height:0;line-height:0;" alt="" src="./awkコマンドの基本 - Qiita_files/bizmatrix"><script type="application/json" id="js-react-on-rails-context">{"railsEnv":"production","inMailer":false,"i18nLocale":"ja","i18nDefaultLocale":"en","href":"https://qiita.com/yamazon/items/563af1b485ff413d381f","location":"/yamazon/items/563af1b485ff413d381f","scheme":"https","host":"qiita.com","port":null,"pathname":"/yamazon/items/563af1b485ff413d381f","search":null,"httpAcceptLanguage":"ja-JP,ja;q=0.9,en-GB;q=0.8,en;q=0.7,en-US;q=0.6,zh-TW;q=0.5,zh;q=0.4","actionPath":"public/items#show","settings":{"analyticsTrackingId":"G-KEVS5DBRVN","tagManagerId":"GTM-W9W5TX4","assetsMap":{},"csrfToken":"aTryR/zqabEZVfWqJokhYiRm3uWg3SY9a9Ov45xHyhMqnSi0R1vu/mLgaATq4WzQ3mzQby+pHANGpy1U2JkJrQ==","locale":"ja","pushOne":{"accessToken":"4bc4bb057a0601d388a7b9e499ca2307e9eb4fc172804e310c59e511d7cac356","dialogImageUrl":"//cdn.qiita.com/assets/public/push_notification/image-qiitan-572179a3bbde375850422ea48b2b6272.png"}},"currentUser":{"defaultStockItemCategories":[{"encryptedId":"0/mLekNnT4BG/mc1EmMP0F/OVMWzzd0pZMBrLemSF9tj0Rk=--pAupHS4peVcuVO8G--/XW0eZ9eJdvWIqX4fqpjfQ==","isDefault":true,"isDestroyableByViewer":false,"isUpdatableByViewer":false,"name":"あとで読む","stockItemsCount":0}],"encryptedId":"UNvn/DY8MbY+wdDw/05MoCz3+YGhNprw--7oYFWqGkXsDJKXf1--8qZ97ZrOwEPF1upPYKjf5A==","isBetaReleaseEnabled":false,"isEarlyAdapter":false,"isEmailConfirmed":false,"isJobseeker":false,"isStaff":false,"isTeamOnly":false,"monthlyPublicImageUploadableSizeLimit":104857600,"name":"","contribution":0,"originalId":3527281,"profileImageUrl":"https://avatars.githubusercontent.com/u/20800131?v=4","profileImageUrlW48":"https://qiita-user-profile-images.imgix.net/https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F20800131%3Fv%3D4?ixlib=rb-4.0.0\u0026auto=compress%2Cformat\u0026lossless=0\u0026w=48\u0026s=6ae22607e1f63dede1c2d527fd7e283c","profileImageUrlW75":"https://qiita-user-profile-images.imgix.net/https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F20800131%3Fv%3D4?ixlib=rb-4.0.0\u0026auto=compress%2Cformat\u0026lossless=0\u0026w=75\u0026s=3b3387f982d5cf88a9fe51009a12968d","remainingPublicImageUploadableSizeInCurrentMonth":104857600,"unreadNotificationsCount":0,"urlName":"Toru52","webPushNotificationKey":"961d7a216af085ba3e35","organizations":{"edges":[],"totalCount":0}},"isLoggedIn":true,"recaptchaSiteKey":"6LfNkiQTAAAAAM3UGnSquBy2akTITGNMO_QDxMw6","errorIconPath":"//cdn.qiita.com/assets/icons/large/missing-profile-image-828ed5829a93fbb35746a6c0f7c8107e.png","additionalParams":{"query_parameters":{},"path_parameters":{"controller":"public/items","action":"show","user_id":"yamazon","type":"items","id":"563af1b485ff413d381f"},"request_id":"8e2dce08-1eeb-424c-97b5-9a31e7c91368","user_id":3527281},"serverSide":false}</script>
+<div id="PersonalArticlePage-react-component-c5e122e4-901d-429d-b65a-5627160c5bf5" bis_skin_checked="1"><div class="style-xgff9b" bis_skin_checked="1"><div class="style-rrt6ky" bis_skin_checked="1" style=""><div id="div-gpt-ad-1687937838189-0" class="style-151h4rv" data-test-adunitpath="/383564218/qiita.com_loginuser_push" elementtiming="gpt-div-gpt-ad-1687937838189-0" data-testid="ArticleAdsHeaderTextBanner_AdUnit" bis_skin_checked="1" data-google-query-id="CODYx_D7xoADFQZbvQodpqsHog"><div id="google_ads_iframe_/383564218/qiita.com_loginuser_push_0__container__" bis_skin_checked="1" style="border: 0pt none; display: inline-block; width: 100%; height: auto;"><iframe frameborder="0" src="./awkコマンドの基本 - Qiita_files/container.html" id="google_ads_iframe_/383564218/qiita.com_loginuser_push_0" title="3rd party ad content" name="" scrolling="no" marginwidth="0" marginheight="0" width="0" height="32" data-is-safeframe="true" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" role="region" aria-label="Advertisement" tabindex="0" data-google-container-id="1" style="border: 0px; vertical-align: bottom; min-width: 100%;" data-load-complete="true"></iframe></div></div><button aria-label="閉じる" data-testid="ArticleAdsHeaderTextBanner_CloseButton" class="style-cnuusj"><span class="material-symbols-outlined style-1vy2f60" aria-hidden="true">close</span></button></div></div><div class=" style-qgd36e" bis_skin_checked="1"><div class="style-yrmhnf" bis_skin_checked="1"><div class="style-2pgeei" bis_skin_checked="1"><div class="style-1duml6f" bis_skin_checked="1"><svg width="64" height="64" viewBox="0 0 64 64" class="style-bg2bk1"><circle cx="32" cy="32" r="19" class="circle"></circle><path fill-rule="evenodd" clip-rule="evenodd" d="M30.5865 41.1378C31.3272 41.8221 32.6722 41.8319 33.4129 41.1574L33.4718 41.1037C38.5554 36.4713 41.8819 33.4401 41.746 29.6619C41.6875 28.0001 40.8396 26.4068 39.4654 25.4684C37.3743 24.0305 34.8841 24.4462 33.1038 25.7333C32.6936 26.0299 32.321 26.3728 31.9997 26.75C31.6783 26.3727 31.3056 26.03 30.8952 25.7338C29.115 24.4491 26.625 24.0385 24.5341 25.4684C23.1599 26.4068 22.312 28.0001 22.2535 29.6619C22.1268 33.4546 25.4697 36.4947 30.5865 41.1378ZM23.7526 29.7133C23.7953 28.5111 24.4144 27.3665 25.38 26.7071L25.3808 26.7065C27.1492 25.4973 29.4926 26.12 30.8579 27.7227L31.543 28.527C31.7826 28.8082 32.2169 28.8082 32.4565 28.527L33.1416 27.7227C34.5102 26.1161 36.8515 25.4914 38.6155 26.7044L38.6195 26.7071C39.5855 27.3667 40.2046 28.512 40.2469 29.7146L40.247 29.7158C40.2969 31.1036 39.73 32.4647 38.3804 34.1435C37.0091 35.8492 34.9938 37.6874 32.403 40.0483C32.3636 40.0842 32.2314 40.1587 32.0103 40.1572C31.7898 40.1556 31.6512 40.0792 31.6044 40.036L31.5995 40.0315L31.5945 40.027C29.0048 37.677 26.9919 35.8432 25.6225 34.1408C24.2752 32.4657 23.7066 31.1034 23.7526 29.7133Z" class="heart-stroke"></path><path d="M33.4129 41.1574C32.6722 41.8319 31.3272 41.8221 30.5865 41.1378C25.4697 36.4947 22.1268 33.4546 22.2535 29.6619C22.312 28.0001 23.1599 26.4068 24.5341 25.4684C27.1071 23.7089 30.2844 24.7363 31.9997 26.75C33.7151 24.7363 36.8924 23.6991 39.4654 25.4684C40.8396 26.4068 41.6875 28.0001 41.746 29.6619C41.8824 33.4546 38.5297 36.4947 33.4129 41.1574Z" class="heart-fill"></path><g class="particles" style="--rotate:30deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:102deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:174deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:246deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:318deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g></svg><button aria-label="いいね" title="いいね" class="style-10ttvi6"></button></div><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f/likers" aria-label="413いいね" class="style-1vpukh3">413</a></div><div class="style-krcte5" bis_skin_checked="1"><button aria-label="ストック" title="ストック" class="style-1xwfn2v"><svg class="style-f2ayo7" height="32" viewBox="0 0 32 32" width="32"><path d="M6.5 5H25.5C25.7761 5 26 5.22386 26 5.5V6.5C26 6.77614 25.7761 7 25.5 7H6.5C6.22386 7 6 6.77614 6 6.5V5.5C6 5.22386 6.22386 5 6.5 5ZM24 19V11.5C24 11.3674 23.9473 11.2402 23.8536 11.1464C23.7598 11.0527 23.6326 11 23.5 11H8.5C8.36739 11 8.24021 11.0527 8.14645 11.1464C8.05268 11.2402 8 11.3674 8 11.5V19C8 20.8565 8.7375 22.637 10.0503 23.9497C11.363 25.2625 13.1435 26 15 26H17C18.8565 26 20.637 25.2625 21.9497 23.9497C23.2625 22.637 24 20.8565 24 19ZM6.58579 9.58579C6.96086 9.21071 7.46957 9 8 9H24C24.5304 9 25.0391 9.21071 25.4142 9.58579C25.7893 9.96086 26 10.4696 26 11V19C26 21.3869 25.0518 23.6761 23.364 25.364C21.6761 27.0518 19.3869 28 17 28H15C12.6131 28 10.3239 27.0518 8.63604 25.364C6.94821 23.6761 6 21.3869 6 19V11C6 10.4696 6.21071 9.96086 6.58579 9.58579Z"></path></svg></button><span class="style-1grh9bf">398</span></div><button aria-label="twitterでシェア" title="ツイート" class="style-rhrq8" type="button"><svg class="style-kzu58m" viewBox="0 0 20 20"><path d="m6.29 18.12c7.53 0 11.65-6.25 11.65-11.65 0-.18 0-.35 0-.53.8-.58 1.49-1.3 2.04-2.12-.73.33-1.53.54-2.36.65.85-.5 1.49-1.31 1.81-2.27-.79.47-1.67.81-2.6.99-.75-.8-1.81-1.29-2.99-1.29-2.26 0-4.1 1.84-4.1 4.1 0 .32.04.63.1.93-3.4-.17-6.42-1.81-8.44-4.28-.35.61-.55 1.31-.55 2.06 0 1.42.73 2.68 1.82 3.41-.67-.02-1.3-.21-1.85-.51v.06c0 1.98 1.41 3.64 3.28 4.02-.34.1-.7.14-1.08.14-.26 0-.52-.02-.77-.07.52 1.63 2.04 2.81 3.83 2.84-1.41 1.1-3.17 1.76-5.09 1.76-.33 0-.65-.02-.97-.06 1.81 1.15 3.96 1.83 6.27 1.83"></path></svg></button><button aria-label="facebookでシェア" title="Facebookでシェア" class="style-rhrq8" type="button"><svg class="style-157xj1g" height="20" viewBox="0 0 20 20" width="20"><path d="m20 10c0-5.52-4.48-10-10-10s-10 4.48-10 10c0 4.99 3.66 9.13 8.44 9.88v-6.99h-2.54v-2.89h2.54v-2.2c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.77l-.44 2.89h-2.33v6.99c4.78-.75 8.44-4.89 8.44-9.88z"></path><path d="m13.89 12.89.44-2.89h-2.77v-1.88c0-.79.39-1.56 1.63-1.56h1.26v-2.46s-1.14-.2-2.24-.2c-2.28 0-3.78 1.38-3.78 3.89v2.2h-2.54v2.89h2.54v6.99c.51.08 1.03.12 1.56.12s1.05-.04 1.56-.12v-6.99h2.33z" fill="#ffffff"></path></svg></button><a aria-label="はてなブックマーク" class="style-1j4haez" href="https://b.hatena.ne.jp/entry/s/qiita.com/yamazon/items/563af1b485ff413d381f" rel="noopener noreferrer" target="_blank" title="はてなブックマーク"><svg class="style-1uu7u3w" viewBox="0 0 20 20"><rect height="18" rx="3.67" width="18" x="1" y="1" fill="#1d9bf0"></rect><g fill="#ffffff"><path d="m11.01 10.29c-.33-.36-.78-.57-1.36-.61.52-.14.89-.35 1.13-.62s.35-.64.35-1.11c0-.37-.08-.69-.24-.97s-.39-.5-.69-.67c-.26-.15-.58-.25-.94-.31-.37-.06-1.01-.09-1.93-.09h-2.24v8.18h2.31c.93 0 1.6-.03 2.01-.09s.75-.17 1.03-.32c.34-.18.61-.44.79-.77s.28-.72.28-1.15c0-.61-.16-1.09-.49-1.46zm-3.85-2.57h.48c.55 0 .93.06 1.12.19s.29.34.29.65-.1.5-.31.63c-.21.12-.58.18-1.13.18h-.45v-1.64zm1.9 4.69c-.22.13-.59.2-1.12.2h-.78v-1.79h.81c.54 0 .91.07 1.11.2.2.14.3.38.3.72 0 .31-.11.53-.33.66z"></path><path d="m13.87 12.02c-.57 0-1.04.46-1.04 1.04s.46 1.04 1.04 1.04 1.04-.46 1.04-1.04-.46-1.04-1.04-1.04z"></path><path d="m12.97 5.91h1.8v5.45h-1.8z"></path></g></svg></a><div class="style-79elbk" bis_skin_checked="1"><button type="button" aria-label="オプションを開く" class="style-cm5lnf"><span class="material-symbols-outlined style-1j8uoc8" aria-hidden="true">more_horiz</span></button></div></div><div class="p-items_options" bis_skin_checked="1"><div bis_skin_checked="1"><div id="dfp-slot-article-sidebar-top-login-user" class="ad-300x250" data-test-adunitpath="/383564218/qiita.com_loginuser_sidebar-top" elementtiming="gpt-dfp-slot-article-sidebar-top-login-user" data-testid="ArticleAdsSidebarTop_AdUnit" bis_skin_checked="1" data-google-query-id="CNLsx_D7xoADFfaG6QUd3tUAVg"><div id="google_ads_iframe_/383564218/qiita.com_loginuser_sidebar-top_0__container__" style="border: 0pt none;" bis_skin_checked="1"><iframe id="google_ads_iframe_/383564218/qiita.com_loginuser_sidebar-top_0" name="google_ads_iframe_/383564218/qiita.com_loginuser_sidebar-top_0" title="3rd party ad content" width="300" height="250" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" role="region" aria-label="Advertisement" tabindex="0" style="border: 0px; vertical-align: bottom;" data-google-container-id="2" data-load-complete="true" bis_size="{&quot;x&quot;:1095,&quot;y&quot;:174,&quot;w&quot;:300,&quot;h&quot;:250,&quot;abs_x&quot;:1095,&quot;abs_y&quot;:174}" bis_id="fr_almjetiansrjtrvwp7whqf" bis_depth="0" bis_chainid="1" src="./awkコマンドの基本 - Qiita_files/saved_resource.html"></iframe></div></div></div><div class="p-items_toc" bis_skin_checked="1"><div id="dfp-slot-article-sidebar-bottom-login-user" class="ad-300x250" data-test-adunitpath="/383564218/qiita.com_loginuser_sidebar-bottom" elementtiming="gpt-dfp-slot-article-sidebar-bottom-login-user" data-testid="ArticleAdsSidebarBottom_AdUnit" bis_skin_checked="1" data-google-query-id="CKSByPD7xoADFYLDfAodKfYBfw"><div id="google_ads_iframe_/383564218/qiita.com_loginuser_sidebar-bottom_0__container__" style="border: 0pt none;" bis_skin_checked="1"><iframe id="google_ads_iframe_/383564218/qiita.com_loginuser_sidebar-bottom_0" name="google_ads_iframe_/383564218/qiita.com_loginuser_sidebar-bottom_0" title="3rd party ad content" width="300" height="250" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" role="region" aria-label="Advertisement" tabindex="0" style="border: 0px; vertical-align: bottom;" data-google-container-id="3" bis_size="{&quot;x&quot;:1095,&quot;y&quot;:448,&quot;w&quot;:300,&quot;h&quot;:250,&quot;abs_x&quot;:1095,&quot;abs_y&quot;:448}" bis_id="fr_6z721y43f583odtb448gxf" bis_depth="0" bis_chainid="3" data-load-complete="true" src="./awkコマンドの基本 - Qiita_files/saved_resource(1).html"></iframe></div></div><div class="style-9ism1t" bis_skin_checked="1"><div class="style-38zwww" bis_skin_checked="1"><ul>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#bash%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8Bawk%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AE%E5%9F%BA%E6%9C%AC" class="">bashにおけるawkコマンドの基本</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#awk%E3%81%AE%E5%9F%BA%E6%9C%AC%E6%9B%B8%E5%BC%8F" class="">awkの基本書式</a>
+<ul>
+<li>
+<ul>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#awk%E3%81%A71%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AFprint-1%E3%81%A7%E3%81%99" class="">awkで1フィールド目を取り出すコマンドは、「print $1」です</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#1%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-1" class="">1フィールド目を出力 print $1</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#2%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-2" class="">2フィールド目を出力 print $2</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#0%E3%81%AF%E3%83%91%E3%82%A4%E3%83%97%E3%82%84%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8B%E3%82%89%E6%B8%A1%E3%81%95%E3%82%8C%E3%81%9F%E6%96%87%E5%AD%97%E5%88%97%E5%85%A8%E3%81%A6%E3%81%A8%E3%81%84%E3%81%86%E6%84%8F%E5%91%B3%E3%81%A7%E3%81%99-print-0" class="">$0は「パイプやファイルから渡された、文字列全て」という意味です print $0</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AB%E3%82%92%E6%8C%87%E5%AE%9A%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%99" class="">フィールド区切り文字に「:」を指定してみます</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AF%E8%A4%87%E6%95%B0%E6%8C%87%E5%AE%9A%E3%81%A7%E3%81%8D%E3%81%BE%E3%81%99" class="">フィールド区切り文字は複数指定できます</a>
+<ul>
+<li>
+<ul>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#print-12-%E3%81%AE%E3%82%88%E3%81%86%E3%81%AB%E3%82%AB%E3%83%B3%E3%83%9E%E3%81%A7%E5%8C%BA%E5%88%87%E3%81%A3%E3%81%A6%E8%A8%98%E8%BF%B0%E3%81%97%E3%81%BE%E3%81%99" class="">print $1,$2 のようにカンマで区切って記述します</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#ofs" class="focus">OFS</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#rs">RS</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#ors">ORS</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#ofs%E3%81%A8ors%E3%82%92%E6%98%8E%E7%A4%BA%E3%81%97%E3%81%BE%E3%81%99">OFSとORSを明示します</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E6%9C%80%E7%B5%82%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E5%A4%89%E6%95%B0%E3%81%A8%E3%81%97%E3%81%A6nf%E3%81%8C%E7%94%A8%E6%84%8F%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%81%BE%E3%81%99">最終フィールドを取り出す変数として$NFが用意されています</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#print%E3%81%AE%E4%BB%96%E3%81%ABprintf%E3%82%82%E3%81%A4%E3%81%8B%E3%81%88%E3%81%BE%E3%81%99">printの他に、printfもつかえます</a>
+</li>
+<li>
+<a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E4%BB%96%E3%81%AB%E3%82%82csv%E5%BD%A2%E5%BC%8F%E3%82%92%E6%89%B1%E3%81%86%E6%99%82%E3%81%AA%E3%81%A9%E3%81%AB%E5%88%A9%E7%94%A8%E3%81%99%E3%82%8Bfpat%E5%A4%89%E6%95%B0%E3%81%AA%E3%81%A9%E3%81%8C%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99">他にも、csv形式を扱う時などに利用する"FPAT"変数などがあります</a>
+</li>
+</ul>
+</div></div></div></div><div class="p-items_main" bis_skin_checked="1"><div class="style-itrjxe" bis_skin_checked="1"><div class="style-10gybah" bis_skin_checked="1"><span class="material-symbols-outlined style-uzy99x" aria-hidden="true">info</span><p>この記事は最終更新日から5年以上が経過しています。</p></div><div class="style-8qb8m4" bis_skin_checked="1"><div data-logly-image="true" class="style-i43zkt" bis_skin_checked="1"><a href="https://qiita.com/yamazon" class="style-6su6fj"><img class="style-1u747qi" height="32" loading="lazy" src="./awkコマンドの基本 - Qiita_files/https___qiita-image-store.s3.amazonaws.com_0_35156_profile-images_1538791621" width="32"></a><div class="style-17gh4w8" bis_skin_checked="1"><a href="https://qiita.com/yamazon" class="style-hgr2uy">@<!-- -->yamazon<span class="style-15fzge">(<!-- -->Tetsuya Yamamoto<!-- -->)</span></a></div></div><h1 data-logly-title="true" class="style-wo2a1i">awkコマンドの基本</h1><div class="style-ee2v6o" bis_skin_checked="1"><a href="https://qiita.com/tags/bash" class="style-okdcjo">Bash</a><a href="https://qiita.com/tags/awk" class="style-okdcjo">AWK</a></div><div class="style-1npej5s" bis_skin_checked="1"><span class="style-1mp27y1">最終更新日 <time datetime="2016-03-14T14:38:39Z">2016年03月14日</time></span><span class="style-1mp27y1">投稿日 <!-- -->2016年03月06日</span></div></div><section class="it-MdContent"><div id="personal-public-article-body" bis_skin_checked="1"><div class="mdContent-inner style-0" bis_skin_checked="1">
+<h2>
+<span id="bashにおけるawkコマンドの基本" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#bash%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8Bawk%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AE%E5%9F%BA%E6%9C%AC"><i class="fa fa-link"></i></a>bashにおけるawkコマンドの基本</h2>
+
+<p>awkについて調べながら勉強したので、個人的にまとめてみました</p>
+
+<p>awkは入力として受け取った文字列に対して、フィールド区切り文字やレコード区切り文字を指定して、<br><br>
+「列」に対する処理を行うためのコマンドです。また、awk単体としても、1つのプログラムです。  </p>
+
+<p></p>
+
+<h2>
+<span id="awkの基本書式" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#awk%E3%81%AE%E5%9F%BA%E6%9C%AC%E6%9B%B8%E5%BC%8F"><i class="fa fa-link"></i></a>awkの基本書式</h2>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">awk</span> <span class="nt">-F</span><span class="s1">'[フィールド区切り文字(複数可能)]'</span> <span class="nt">-v</span> <span class="s1">'変数=xx'</span> <span class="s1">'{awkコマンド}'</span> file
+
+</code></pre></div></div>
+
+<ul>
+<li>今回は標準出力を行うawkコマンド「print」を利用し、awkで指定したフィールドを取得します</li>
+</ul>
+
+<h4>
+<span id="awkで1フィールド目を取り出すコマンドはprint-1です" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#awk%E3%81%A71%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AFprint-1%E3%81%A7%E3%81%99"><i class="fa fa-link"></i></a>awkで1フィールド目を取り出すコマンドは、「print $1」です</h4>
+
+<h1>
+<span id="1フィールド目を出力-print-1" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#1%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-1"><i class="fa fa-link"></i></a>1フィールド目を出力 print $1</h1>
+
+<p>オプションである -F'[フィールド区切り文字]'　を指定しない場合、<br>
+区切り文字には、タブまたは半角スペースが選択されます<br>
+echo からパイプで渡してみます</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1 2 3 4 |awk <span class="s1">'{print $1}'</span>
+1
+
+</code></pre></div></div>
+
+<h2>
+<span id="2フィールド目を出力-print-2" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#2%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-2"><i class="fa fa-link"></i></a>2フィールド目を出力 print $2</h2>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1 2 3 4 |awk <span class="s1">'{print $2}'</span>
+2
+
+</code></pre></div></div>
+
+<h2>
+<span id="0はパイプやファイルから渡された文字列全てという意味です-print-0" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#0%E3%81%AF%E3%83%91%E3%82%A4%E3%83%97%E3%82%84%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8B%E3%82%89%E6%B8%A1%E3%81%95%E3%82%8C%E3%81%9F%E6%96%87%E5%AD%97%E5%88%97%E5%85%A8%E3%81%A6%E3%81%A8%E3%81%84%E3%81%86%E6%84%8F%E5%91%B3%E3%81%A7%E3%81%99-print-0"><i class="fa fa-link"></i></a>$0は「パイプやファイルから渡された、文字列全て」という意味です print $0</h2>
+
+<p>printのみも、一緒</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1 2 3 4 |awk <span class="s1">'{print $0}'</span>
+1 2 3 4
+
+<span class="nb">echo </span>1 2 3 4 |awk <span class="s1">'{print}'</span>
+1 2 3 4
+
+</code></pre></div></div>
+
+<h2>
+<span id="フィールド区切り文字にを指定してみます" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AB%E3%82%92%E6%8C%87%E5%AE%9A%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%99"><i class="fa fa-link"></i></a>フィールド区切り文字に「:」を指定してみます</h2>
+
+<p>1フィールド目を出力</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2:3:4 |awk <span class="nt">-F</span><span class="s1">'[:]'</span> <span class="s1">'{print $1}'</span>
+1
+
+</code></pre></div></div>
+
+<p>2フィールド目を出力</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2:3:4 |awk <span class="nt">-F</span><span class="s1">'[:]'</span> <span class="s1">'{print $2}'</span>
+2
+
+</code></pre></div></div>
+
+<h2>
+<span id="フィールド区切り文字は複数指定できます" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AF%E8%A4%87%E6%95%B0%E6%8C%87%E5%AE%9A%E3%81%A7%E3%81%8D%E3%81%BE%E3%81%99"><i class="fa fa-link"></i></a>フィールド区切り文字は複数指定できます</h2>
+
+<p>フィールド区切り文字に「:」と「/」を指定<br>
+ならべて書くことで、「:」と「/」の1つ1つがフィールド区切り文字として扱われます</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="s1">'{print $3}'</span>
+3
+
+</code></pre></div></div>
+
+<h2>
+<span id="複数フィールドの出力-print-12" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E8%A4%87%E6%95%B0%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E3%81%AE%E5%87%BA%E5%8A%9B-print-12"><i class="fa fa-link"></i></a>複数フィールドの出力 print $1,$2</h2>
+
+<h4>
+<span id="print-12-のようにカンマで区切って記述します" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#print-12-%E3%81%AE%E3%82%88%E3%81%86%E3%81%AB%E3%82%AB%E3%83%B3%E3%83%9E%E3%81%A7%E5%8C%BA%E5%88%87%E3%81%A3%E3%81%A6%E8%A8%98%E8%BF%B0%E3%81%97%E3%81%BE%E3%81%99"><i class="fa fa-link"></i></a>print $1,$2 のようにカンマで区切って記述します</h4>
+
+<p>複数フィールドの出力は、半角スペースで区切られます<br>
+これは、OFSを指定していないため ※OFSについては後述します</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="s1">'{print $1,$2}'</span>
+1 2
+
+</code></pre></div></div>
+
+<h2>
+<span id="ofs" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#ofs"><i class="fa fa-link"></i></a>OFS</h2>
+
+<p>「OFS」は、Output Field Separatorの略で、awkの組み込み変数であり、「出力のフィールド区切り文字」を指定します<br>
+下記では「#」を指定し、フィールドの出力を「#」で区切ります<br>
+また、「-v」 はvariable(変数)を指定する、という意味のオプションです</p>
+
+<p>-v '変数=xx'<br>
+という形式で記述します</p>
+
+<p>-F'[フィールド区切り文字]'で、「入力のフィールド区切り文字」については指定しますが、これは、処理で一番よく使われるためオプション化されているだけ、という違いです。</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="nt">-v</span> <span class="s1">'OFS=#'</span> <span class="s1">'{print $1,$3}'</span>
+1#3
+
+</code></pre></div></div>
+
+<h2>
+<span id="rs" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#rs"><i class="fa fa-link"></i></a>RS</h2>
+
+<p>RSはRecord Separatorの略で、awkの組み込み変数です<br>
+「入力のレコード区切り文字」を指定、下記では「/」を指定します<br>
+レコードは「/」を区切り文字にして、「1:2」と「3:4」に分けられます<br>
+「/」をレコード区切り文字にして、各々のレコードから1フィールド目を取得します<br>
+出力は改行で区切って出力されます　※これはORSが指定されていないため ORSは下述</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:]'</span> <span class="nt">-v</span> <span class="s1">'RS=/'</span> <span class="s1">'{print $1}'</span>
+1
+3
+<span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:]'</span> <span class="nt">-v</span> <span class="s1">'RS=/'</span> <span class="s1">'{print $1,$2}'</span>
+1 2
+3 4
+<span class="c"># フィールド区切り文字とレコード区切り文字で同じ文字がある場合、レコード区切り文字が優先されます</span>
+<span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="nt">-v</span> <span class="s1">'RS=/'</span> <span class="s1">'{print $1,$2}'</span>
+1 2
+3 4
+
+</code></pre></div></div>
+
+<h2>
+<span id="ors" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#ors"><i class="fa fa-link"></i></a>ORS</h2>
+
+<p>「ORS」は、Output Record Separatorの略で、awkの組み込み変数であり、「出力のレコード区切り文字」を指定します<br>
+下記では「This is ORS」を指定し、レコードの出力を区切ります</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="nt">-v</span> <span class="s1">'RS=/'</span> <span class="nt">-v</span> <span class="s1">'ORS=This is ORS'</span> <span class="s1">'{print $1,$2}'</span>
+1 2This is ORS3 4
+
+</code></pre></div></div>
+
+<h2>
+<span id="ofsとorsを明示します" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#ofs%E3%81%A8ors%E3%82%92%E6%98%8E%E7%A4%BA%E3%81%97%E3%81%BE%E3%81%99"><i class="fa fa-link"></i></a>OFSとORSを明示します</h2>
+
+<p>OFSは空白4つ、ORSは改行2つにしてみます<br>
+\n は改行</p>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="nt">-v</span> <span class="s1">'OFS=    '</span> <span class="nt">-v</span> <span class="s1">'RS=/'</span> <span class="nt">-v</span> <span class="s1">'ORS=\n\n'</span> <span class="s1">'{print $1,$2}'</span>
+1    2
+
+3    4
+
+
+</code></pre></div></div>
+
+<h2>
+<span id="最終フィールドを取り出す変数としてnfが用意されています" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E6%9C%80%E7%B5%82%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E5%A4%89%E6%95%B0%E3%81%A8%E3%81%97%E3%81%A6nf%E3%81%8C%E7%94%A8%E6%84%8F%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%81%BE%E3%81%99"><i class="fa fa-link"></i></a>最終フィールドを取り出す変数として$NFが用意されています</h2>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="s1">'{print $NF}'</span>
+4
+
+<span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="s1">'{print $NF-1}'</span>
+3
+
+</code></pre></div></div>
+
+<h2>
+<span id="printの他にprintfもつかえます" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#print%E3%81%AE%E4%BB%96%E3%81%ABprintf%E3%82%82%E3%81%A4%E3%81%8B%E3%81%88%E3%81%BE%E3%81%99"><i class="fa fa-link"></i></a>printの他に、printfもつかえます</h2>
+
+<div class="code-frame" data-lang="sh" bis_skin_checked="1"><div class="code-copy" bis_skin_checked="1"><div class="code-copy__message" style="display: none;" bis_skin_checked="1">Copied!</div><button class="code-copy__button" style="display: none;"><span class="fa fa-fw fa-clipboard"></span></button></div><div class="highlight" bis_skin_checked="1"><pre><code><span class="nb">echo </span>1:2/3:4 |awk <span class="nt">-F</span><span class="s1">'[:/]'</span> <span class="s1">'{printf "%s\n%s\n",$NF,$NF-1}'</span>
+4
+3
+
+</code></pre></div></div>
+
+<h2>
+<span id="他にもcsv形式を扱う時などに利用するfpat変数などがあります" class="fragment"></span><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f#%E4%BB%96%E3%81%AB%E3%82%82csv%E5%BD%A2%E5%BC%8F%E3%82%92%E6%89%B1%E3%81%86%E6%99%82%E3%81%AA%E3%81%A9%E3%81%AB%E5%88%A9%E7%94%A8%E3%81%99%E3%82%8Bfpat%E5%A4%89%E6%95%B0%E3%81%AA%E3%81%A9%E3%81%8C%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99"><i class="fa fa-link"></i></a>他にも、csv形式を扱う時などに利用する"FPAT"変数などがあります</h2>
+
+<p>参考：<a href="http://codezine.jp/article/detail/8323" class="autolink" rel="nofollow noopener" target="_blank">http://codezine.jp/article/detail/8323</a></p>
+</div></div></section><div class="style-r2q46l" bis_skin_checked="1"><button aria-label="リンク" class="style-1f27srl"><span class="material-symbols-outlined style-qlae57" aria-hidden="true">share</span></button><button aria-label="twitterでシェア" title="ツイート" class="style-1np7rld" type="button"><svg class="style-kzu58m" viewBox="0 0 20 20"><path d="m6.29 18.12c7.53 0 11.65-6.25 11.65-11.65 0-.18 0-.35 0-.53.8-.58 1.49-1.3 2.04-2.12-.73.33-1.53.54-2.36.65.85-.5 1.49-1.31 1.81-2.27-.79.47-1.67.81-2.6.99-.75-.8-1.81-1.29-2.99-1.29-2.26 0-4.1 1.84-4.1 4.1 0 .32.04.63.1.93-3.4-.17-6.42-1.81-8.44-4.28-.35.61-.55 1.31-.55 2.06 0 1.42.73 2.68 1.82 3.41-.67-.02-1.3-.21-1.85-.51v.06c0 1.98 1.41 3.64 3.28 4.02-.34.1-.7.14-1.08.14-.26 0-.52-.02-.77-.07.52 1.63 2.04 2.81 3.83 2.84-1.41 1.1-3.17 1.76-5.09 1.76-.33 0-.65-.02-.97-.06 1.81 1.15 3.96 1.83 6.27 1.83"></path></svg></button><button aria-label="facebookでシェア" title="Facebookでシェア" class="style-1np7rld" type="button"><svg class="style-157xj1g" height="20" viewBox="0 0 20 20" width="20"><path d="m20 10c0-5.52-4.48-10-10-10s-10 4.48-10 10c0 4.99 3.66 9.13 8.44 9.88v-6.99h-2.54v-2.89h2.54v-2.2c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.77l-.44 2.89h-2.33v6.99c4.78-.75 8.44-4.89 8.44-9.88z"></path><path d="m13.89 12.89.44-2.89h-2.77v-1.88c0-.79.39-1.56 1.63-1.56h1.26v-2.46s-1.14-.2-2.24-.2c-2.28 0-3.78 1.38-3.78 3.89v2.2h-2.54v2.89h2.54v6.99c.51.08 1.03.12 1.56.12s1.05-.04 1.56-.12v-6.99h2.33z" fill="#ffffff"></path></svg></button><a aria-label="はてなブックマーク" class="style-1f27srl" href="https://b.hatena.ne.jp/entry/s/qiita.com/yamazon/items/563af1b485ff413d381f" rel="noopener noreferrer" target="_blank" title="はてなブックマーク"><svg class="style-1uu7u3w" viewBox="0 0 20 20"><rect height="18" rx="3.67" width="18" x="1" y="1" fill="#1d9bf0"></rect><g fill="#ffffff"><path d="m11.01 10.29c-.33-.36-.78-.57-1.36-.61.52-.14.89-.35 1.13-.62s.35-.64.35-1.11c0-.37-.08-.69-.24-.97s-.39-.5-.69-.67c-.26-.15-.58-.25-.94-.31-.37-.06-1.01-.09-1.93-.09h-2.24v8.18h2.31c.93 0 1.6-.03 2.01-.09s.75-.17 1.03-.32c.34-.18.61-.44.79-.77s.28-.72.28-1.15c0-.61-.16-1.09-.49-1.46zm-3.85-2.57h.48c.55 0 .93.06 1.12.19s.29.34.29.65-.1.5-.31.63c-.21.12-.58.18-1.13.18h-.45v-1.64zm1.9 4.69c-.22.13-.59.2-1.12.2h-.78v-1.79h.81c.54 0 .91.07 1.11.2.2.14.3.38.3.72 0 .31-.11.53-.33.66z"></path><path d="m13.87 12.02c-.57 0-1.04.46-1.04 1.04s.46 1.04 1.04 1.04 1.04-.46 1.04-1.04-.46-1.04-1.04-1.04z"></path><path d="m12.97 5.91h1.8v5.45h-1.8z"></path></g></svg></a></div></div><div bis_skin_checked="1"><div class="style-itrjxe" bis_skin_checked="1"><div bis_skin_checked="1"><div class="style-1gx4cfw" bis_skin_checked="1"><div class="style-1hp6i1l" bis_skin_checked="1"><div id="dfp-slot-article-after-body-for-pc-left-login-user" class="ad-336x280" data-test-adunitpath="/383564218/qiita.com_loginuser_under-article-left" elementtiming="gpt-dfp-slot-article-after-body-for-pc-left-login-user" data-testid="ArticleAdsAfterBody_AdUnit" bis_skin_checked="1" data-google-query-id="CKfxx_D7xoADFUTJvQodl5IMpA"><div id="google_ads_iframe_/383564218/qiita.com_loginuser_under-article-left_0__container__" style="border: 0pt none;" bis_skin_checked="1"><iframe id="google_ads_iframe_/383564218/qiita.com_loginuser_under-article-left_0" name="google_ads_iframe_/383564218/qiita.com_loginuser_under-article-left_0" title="3rd party ad content" width="300" height="250" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" role="region" aria-label="Advertisement" tabindex="0" style="border: 0px; vertical-align: bottom;" data-google-container-id="4" data-load-complete="true" bis_size="{&quot;x&quot;:311,&quot;y&quot;:6193,&quot;w&quot;:300,&quot;h&quot;:250,&quot;abs_x&quot;:311,&quot;abs_y&quot;:6193}" bis_id="fr_0kh5zm46m77qmpg7roir29" bis_depth="0" bis_chainid="2" src="./awkコマンドの基本 - Qiita_files/saved_resource(2).html"></iframe></div></div></div><div class="style-1hp6i1l" bis_skin_checked="1"><div id="dfp-slot-article-after-body-for-pc-right-login-user" class="ad-336x280" data-test-adunitpath="/383564218/qiita.com_loginuser_under-article-right" elementtiming="gpt-dfp-slot-article-after-body-for-pc-right-login-user" data-testid="ArticleAdsAfterBody_AdUnit" bis_skin_checked="1" data-google-query-id="CKSgyvD7xoADFSmG6QUdwbIAOQ"><div id="google_ads_iframe_/383564218/qiita.com_loginuser_under-article-right_0__container__" style="border: 0pt none;" bis_skin_checked="1"><iframe id="google_ads_iframe_/383564218/qiita.com_loginuser_under-article-right_0" name="google_ads_iframe_/383564218/qiita.com_loginuser_under-article-right_0" title="3rd party ad content" width="300" height="250" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" role="region" aria-label="Advertisement" tabindex="0" style="border: 0px; vertical-align: bottom;" data-google-container-id="5" bis_size="{&quot;x&quot;:647,&quot;y&quot;:6193,&quot;w&quot;:300,&quot;h&quot;:250,&quot;abs_x&quot;:647,&quot;abs_y&quot;:6193}" bis_id="fr_ya0nq98bw5dlgkupfpjnwi" bis_depth="0" bis_chainid="4" data-load-complete="true" src="./awkコマンドの基本 - Qiita_files/saved_resource(3).html"></iframe></div></div></div></div></div></div><div class="style-nxr1bw" bis_skin_checked="1"><div class="style-isd7vo" bis_skin_checked="1"><div id="logly-lift-4279494" bis_skin_checked="1"><div id="logly-lift-widget" bis_skin_checked="1">  <div id="logly-lift-widget-header" bis_skin_checked="1">    <span>関連記事</span>    <span class="logly-lift-credit logly-lift-credit2"><a href="https://www.logly.co.jp/privacy.html" target="_top" rel="nofollow noopener">Recommended by <span class="logly-lift-credit-logo" title="logly"></span></a></span>  </div>  <div id="logly-lift-widget-content" bis_skin_checked="1">    <div class="logly-lift-ad" bis_skin_checked="1">  <span class="logly-lift-ad-icon"><img src="./awkコマンドの基本 - Qiita_files/8c69cb7da3a9f169877ed3dadc58ccfd.webp" width="18"></span>  <div　class="logly-lift-ad-content">    <a class="logly-lift-ad-link" href="https://qiita.com/tofu511/items/3ecf9c5361d08b5c6eae" target="_top" style="text-decoration:none;" data-click-url="https://dsp.logly.co.jp/click?ad=4AG4hpsDG-ROEfxdrzUjnRGIsZtivdjh-lOw86kt9faXLnpM8uAO76PnK14lDXpJLr8bTHTs12VuG7s5cjtLuql5XyvdrDYbW5za-Or-CLqH4PBmAFfv0ETvXGG6IKV6WF0sXKpF051cOLTPIPZvu8W5gW6gNameuxsE1oG427fBzY3qYZR5l8eB9WVJJYmhlSYg8z9oMbydHjRMbEtVtKs1wM8kajUHGc-TzxPMNXuT-_nmnNwzYNRynHzKY4dCYoMzQUlxqUeFuGs5s66tJ75IqZqVh4-1uwebo_N5tZVoGfYSSQo9hZobj8eMvG1HWlDAo4oVKIviZHxGes3CHll6XQ-nCJ90J-lDpfkGmuGqxygiEzqnzUgHyYyZhFtDwoss1yUrPhZ-YJmLoNvZrbb3a0Hft1fQnpvHBLgup9WzrsJTFmAy6VeEjBsZAo6EOv9PijXI9VonGcB6KXPyyC9y-kPnn9SxkCW5JX3lEN1K7fGvLJfTTkY2EGC3dIrrsGpRuNy7JNGCiek-CtiTcEug4ux7kUlVdCrVCfP5TSc2kY_DsCWJSGoZ0mW53H5Aw3MqVg8zjDQ">      <span class="logly-lift-ad-title">[初心者向け]Awkの使い方</span>    </a>    <span class="logly-lift-ad-author">by tofu511</span><img src="./awkコマンドの基本 - Qiita_files/abc" width="1" height="1" style="position: absolute; width: 1px; height: 1px; top: -32767px; left: -32767px;" alt="">  </div　class="logly-lift-ad-content"></div></div><div class="logly-lift-ad" bis_skin_checked="1">  <span class="logly-lift-ad-icon"><img src="./awkコマンドの基本 - Qiita_files/12a9a17f78c05b7de10f42d342456140.webp" width="18"></span>  <div　class="logly-lift-ad-content">    <a class="logly-lift-ad-link" href="https://qiita.com/ohtsuka1317/items/92c339a65533e1e6c6fc" target="_top" style="text-decoration:none;" data-click-url="https://dsp.logly.co.jp/click?ad=4AG4hpsDG-ROEfxdrzUjnRGIsZtivdjh-lOw86kt9fb1gQ5_iCjK0JAGSfdqv5HNnLRbwWhUyH7JVUQBL0cNrXkWvFMI-mPGKwrvS8Yt4t77M3SasWjiWAczzMojSzNqYPcWFuJ3WtyhTeNteMFUCHIjQmz7jk_ytghvT5js9jQM0okL_3G0g3qULGpnwjejMrQRPxrALvM0_UV2XCnDGdWyG6hkqRuNJx0JQLmswif-GkWdV5Zt75JmOW0bLEsbqvBzq0kDM0t1nnc-pE2Z0HGEijeymu6IAu-sTY4tOwPMhCPAkoTmnrDnKvmjW4Q-3SjzR3zF7oRdrfxE6MR7PJyeoFa2LAVqhuoG6PTbzT2OHaX1bKmnO1WV5OivkgOuUzLHbAEouFhy6sD8mDm1g-domlMkGAGaLj4XN-jPVSnFtWY04qZAKQovOseT8mhYavvhsPS-A921qsJ59twd5l7hWEhDYiS3EHq5cDtI4nOQGKTTXeCFwO32o6U5BD7iNAP6is5Xof-GM-9Ia0Yr39_Ec3bQIKmIY0s3LvyJ9TheZURKZUhcOxLZQlsUJFGVn3ucUDrF5WAEo081v76Ypm4RIE9j7ga1">      <span class="logly-lift-ad-title">実用 perl ワンライナー</span>    </a>    <span class="logly-lift-ad-author">by ohtsuka1317</span>  </div　class="logly-lift-ad-content"></div></div><div class="logly-lift-ad" bis_skin_checked="1">  <span class="logly-lift-ad-icon"><img src="./awkコマンドの基本 - Qiita_files/8d88e280ae0b56b2575f7b29b789647a.webp" width="18"></span>  <div　class="logly-lift-ad-content">    <a class="logly-lift-ad-link" href="https://qiita.com/key-amb/items/754a12eda28e7650a47c" target="_top" style="text-decoration:none;" data-click-url="https://dsp.logly.co.jp/click?ad=4AG4hpsDG-ROEfxdrzUjnRGIsZtivdjh-lOw86kt9famei0eSkSQBYWufbTvbd4XN7U3Q6qPepjJfSTypp2mNcRByMtupIzGc6z6AwXfDGOhA6i6Lays-44Pk1GWQt3d2tR0cXTRhT8p9v8WdI3Za1U19HLA7WlTZ8MwpZ0VhwKgN5hfGjfu3kV2NwjhOnuQuan_-PRFsEqiJOaWNfxOSZgF_ctqMWdoqXuzstHzaRWLgbR4eCeSaXdnaI8qghkb8XMp-Gk460ApAbxqYJ7uIVWdxMwgQJH2GcMBYLAC2iU1nsNnGRSS_a0jgbVG3HIpUrWvYc8Fpx9fUBsYmNP8o5nPC3QLGMS_1_mXqBFrfq85LsTOaNfdEoVfu_mRSzbiY6Vb83Fi2B4Z9Ikb16Uqeg6Rpn3zSJamPsledxmbCUaaf0oXTFzaU1iplLq3uqW7P0rT3u5MwNKAB-OYnxLGbiX3sDEBQOQ6MZm_A7J7mKRWch2WkMsJRmrMyzqC3FDshpvJvUO_IvD2-7kPaKvbVYvwbotCXfKJYtqLpJ3jxORafwBhEWPqeUArAt-Q_d4_sFSkRfX2uFo">      <span class="logly-lift-ad-title">AWK によるテキストのワンライナー処理クックブック集</span>    </a>    <span class="logly-lift-ad-author">by key-amb</span>  </div　class="logly-lift-ad-content"></div><div class="logly-lift-ad" bis_skin_checked="1">  <span class="logly-lift-ad-icon"><img src="./awkコマンドの基本 - Qiita_files/a10da844c70e075845f2ae51b65e3c64.webp" width="18"></span>  <div　class="logly-lift-ad-content">    <a class="logly-lift-ad-link" href="https://qiita.com/saicologic/items/65e06c796fd60179b22a" target="_top" style="text-decoration:none;" data-click-url="https://dsp.logly.co.jp/click?ad=4AG4hpsDG-ROEfxdrzUjnRGIsZtivdjh-lOw86kt9fY3Do5-7CNPPLh7yHHkmxE_Ii8zvtIEgAy6CbLluLMhrJTaGnb4nAa5tE0yJq75B0h75oV1jHqTTD8c-IalbKNUQQy4-fuUKgy5ka9KzY-_DzDf8GvKchEwjYDm1FmalD-nLHrBzy03FQ-DABpRJoZh4yyuIidODSPfSq3q95jdto1P5XyY5p-tPFDwktDaAOw6DWjaj1VwJF1f7DHW_tEbh3aKocStZZ6OFaDC-pOBLsrpxLazDDzmlMG7Fc5-u3AGY4XqcO9fBeREwovhk5qKKj8rMes6yQVkMrjPQZKWPJKu2_ZGv-IJM8W-3tKACW0TiJhZvDtxLdWaPGLcpukj5v_RxAPuDGoqvwM44B9aqZ-b5BNtnMpqsxu5C0KAh_VCWsMvMBwv0eBTlirET6ENQ-t3FM7TxSm5us09q0uwzKIHO0kWq9eMy_6lzkdJ8yktor6qtAzXyoQFSlT_QEJGepXad2x-_E6nbSMrNRYG1ecgF-t8CNaJPSHWWxK2llQAwbplBdR_Hdq2x7mQ6uwGNqHDxnc8gcmpDXIqwY76jw">      <span class="logly-lift-ad-title">awkでカンマ区切りのデータを指定した列だけカンマ区切りで出力する</span>    </a>    <span class="logly-lift-ad-author">by saicologic</span>  </div　class="logly-lift-ad-content"></div><div class="logly-lift-ad" bis_skin_checked="1">    <span class="logly-lift-ad-icon"><img src="./awkコマンドの基本 - Qiita_files/normal.webp" width="18"></span>    <div　class="logly-lift-ad-content">      <a class="logly-lift-ad-link" href="https://dsp.logly.co.jp/click?ad=4AG4hpsDG-ROEfxdrzUjnRGIsZtivdjh6mpn2igySEmLAzY48jySUB1GxNFCML8mnepB-iyA26ClhXfvy-GrYBkZikdokPpz-9tu5Te1w6BsI8VkprZFMkpC46RLDSxk-6J5pWDewUM59c4WgSqqdW8OwO6UY6ZXLmIssalvCY-rvb1RvUFriAGqdAZbLCD89NyThgSY_Q3flSUbEvwKbNJr3JWhBup6qwJmldXx98PrO4Poa620FqusFl2XAYpfNUGN7QnKxUdrtkciuz34A-xRpBo_2CP_TkiUwu8GpMAlRnq6z3jRUMhk9ML2fZxdcbSTqkcmkA9Pnbsb9WAZA1JsMnRajSse6oeojX5UXmbK9j8FvuoRxxXDU5aIEedpdhHiIWETnci2EaP8YCmioXmxj045to6Y1Fk2159b96x12n9ACJyf0Lvaw7C3XokNVvKB8DuiaybbrgEy3RVbBME7BbBiI-9jG5ouMSu3hv6l--YMGFhMNB_c-immuGYNoPO-iLTyNh3r8adMQClo2lJjtgoEDMSUeHWmsQvYh_ihMRn4U6X5DhXXTKcRe8wrXBBqI-P2XPM" target="_blank" style="text-decoration:none;" rel="nofollow noopener">        <span class="logly-lift-ad-title">円定期預金が優遇金利の「バスケット定期預金」とは？</span>      </a><img src="./awkコマンドの基本 - Qiita_files/bc" width="1" height="1" style="position: absolute; width: 1px; height: 1px; top: -32767px; left: -32767px;" alt="">      <span class="logly-lift-ad-adv">PR 大和ネクスト銀行</span>    </div　class="logly-lift-ad-content"></div><div class="logly-lift-ad" bis_skin_checked="1">    <span class="logly-lift-ad-icon"><img src="./awkコマンドの基本 - Qiita_files/original.webp" width="18"></span>    <div　class="logly-lift-ad-content">      <a class="logly-lift-ad-link" href="https://dsp.logly.co.jp/click?ad=4AG4hpsDG-ROEfxdrzUjnRGIsZtivdjhzE5nxlxH81u5hLDxOHGlpZO1GHeJ7ABQdsPxHguYH3Gjtmayh5qtqbcNbcPXYieiBfTK7IIoGrrPizZsk4PG_MLVvtqarUtw0rDYm10XfiBAODr8l8Aw3gvvmIfQJDDk6YGHUe0SsJJKWe2j7aL0XQ9Pgmnc-I3J6yS3IuV0DijDe_ZmvYJI80rowNJ-YP53GPSl4Q49fX4nNHUoj_JaFIKEl2pgZT-qmvRPCHGWRXtJm-o2rQz86hUiFKfPb9dq4n-YbspCFd14X1EcdTfAsh3K7NBS8BgB2u9XlQhKJ6VAekmS3sRKVE5BYxQhGbTCQ-gutOFZUKGTnluRnf01ooivXb03zUJeC0Ci_F73SB9QGejhd-tYDFpzmk_JlcN5XFRPNejSIlmFfmVNOlNJMBBjOULFoT-YNgMrXLI2OV4TUcA4U1JbAL73iv1-pxzKroBiBk7qtW-cnWO5v71NbHtAbTYsfDJq-86DgS3RvQCfQ9tjD-0S2Z15W0ZwFXj_vPl093HE-Ng" target="_blank" style="text-decoration:none;" rel="nofollow noopener">        <span class="logly-lift-ad-title">9割がフリーランス！最先端プロダクトを手がける精鋭プロフェッショナル集団「GNUS」</span>      </a><img src="./awkコマンドの基本 - Qiita_files/bc(1)" width="1" height="1" style="position: absolute; width: 1px; height: 1px; top: -32767px; left: -32767px;" alt="">      <span class="logly-lift-ad-adv">PR 株式会社GNUS</span>    </div　class="logly-lift-ad-content"></div>    <div class="logly-lift-clear" bis_skin_checked="1"></div></div></div></div><div class="style-nxr1bw" style="" bis_skin_checked="1"><div id="comments" class="style-8atqhb" bis_skin_checked="1"><p class="style-tojltn">コメント</p><div class="style-1pu0cut" bis_skin_checked="1">この記事にコメントはありません。</div><div class="style-1dmcyzl" bis_skin_checked="1"><div bis_skin_checked="1"><div class="style-1c0of6w" bis_skin_checked="1"><img class="style-r74j4e" height="36" loading="lazy" src="./awkコマンドの基本 - Qiita_files/20800131" width="36"><p>投稿する</p></div><div class="style-d9lcew" bis_skin_checked="1"><div class="style-1v4h9nr" bis_skin_checked="1"><div class="style-k008qs" bis_skin_checked="1"><button type="button" class="style-au7pju">編集</button><button type="button" class="style-m79fud">プレビュー</button></div><div class="style-dtw560" bis_skin_checked="1"><div class="style-3fim88" bis_skin_checked="1"><div role="tooltip" class="style-1m561ys" bis_skin_checked="1">Markdownの書き方</div><a href="https://qiita.com/Qiita/items/c686397e4a0f4f11683d" target="_blank" rel="noopener noreferrer" aria-label="Markdownの書き方" class="style-gq3wcc"><span class="material-symbols-outlined style-qlae57" aria-hidden="true">help</span></a></div><div class="style-3fim88" bis_skin_checked="1"><div role="tooltip" class="style-1m561ys" bis_skin_checked="1">絵文字を選択</div><button type="button" aria-label="絵文字を選択" class="style-6j6lgr"><span class="material-symbols-outlined style-157iwiy" aria-hidden="true">sentiment_satisfied</span></button></div></div></div><div class="style-hpgf8j" bis_skin_checked="1"><textarea disabled="" placeholder="テキストを入力" class="style-179iicz" style="overflow: hidden; overflow-wrap: break-word; resize: none; height: 99.6px;"></textarea><div class="co-Item_text style-1d9bzop" style="display: none;" bis_skin_checked="1"><div class="co-Item_text false style-0" bis_skin_checked="1"></div></div><div class="style-on5s5d" bis_skin_checked="1"><span class="style-1mp27y1">メールアドレスの認証が完了後、コメントの投稿が可能になります。</span><button font-size="14" disabled="" class="style-4bw89i" style="margin-left: auto;">投稿する</button></div></div></div><input type="file" style="display: none;"></div></div></div></div></div></div></div><div class="style-1do2ggz" bis_skin_checked="1"><div class="style-5jpx49" bis_skin_checked="1"><div class="style-10h2231" bis_skin_checked="1"><div class="style-1duml6f" bis_skin_checked="1"><svg width="64" height="64" viewBox="0 0 64 64" class="style-bg2bk1"><circle cx="32" cy="32" r="19" class="circle"></circle><path fill-rule="evenodd" clip-rule="evenodd" d="M30.5865 41.1378C31.3272 41.8221 32.6722 41.8319 33.4129 41.1574L33.4718 41.1037C38.5554 36.4713 41.8819 33.4401 41.746 29.6619C41.6875 28.0001 40.8396 26.4068 39.4654 25.4684C37.3743 24.0305 34.8841 24.4462 33.1038 25.7333C32.6936 26.0299 32.321 26.3728 31.9997 26.75C31.6783 26.3727 31.3056 26.03 30.8952 25.7338C29.115 24.4491 26.625 24.0385 24.5341 25.4684C23.1599 26.4068 22.312 28.0001 22.2535 29.6619C22.1268 33.4546 25.4697 36.4947 30.5865 41.1378ZM23.7526 29.7133C23.7953 28.5111 24.4144 27.3665 25.38 26.7071L25.3808 26.7065C27.1492 25.4973 29.4926 26.12 30.8579 27.7227L31.543 28.527C31.7826 28.8082 32.2169 28.8082 32.4565 28.527L33.1416 27.7227C34.5102 26.1161 36.8515 25.4914 38.6155 26.7044L38.6195 26.7071C39.5855 27.3667 40.2046 28.512 40.2469 29.7146L40.247 29.7158C40.2969 31.1036 39.73 32.4647 38.3804 34.1435C37.0091 35.8492 34.9938 37.6874 32.403 40.0483C32.3636 40.0842 32.2314 40.1587 32.0103 40.1572C31.7898 40.1556 31.6512 40.0792 31.6044 40.036L31.5995 40.0315L31.5945 40.027C29.0048 37.677 26.9919 35.8432 25.6225 34.1408C24.2752 32.4657 23.7066 31.1034 23.7526 29.7133Z" class="heart-stroke"></path><path d="M33.4129 41.1574C32.6722 41.8319 31.3272 41.8221 30.5865 41.1378C25.4697 36.4947 22.1268 33.4546 22.2535 29.6619C22.312 28.0001 23.1599 26.4068 24.5341 25.4684C27.1071 23.7089 30.2844 24.7363 31.9997 26.75C33.7151 24.7363 36.8924 23.6991 39.4654 25.4684C40.8396 26.4068 41.6875 28.0001 41.746 29.6619C41.8824 33.4546 38.5297 36.4947 33.4129 41.1574Z" class="heart-fill"></path><g class="particles" style="--rotate:30deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:102deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:174deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:246deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g><g class="particles" style="--rotate:318deg"><circle cx="29" cy="19" r="3" fill="var(--color-yellow-60)" class="particle" style="--x:26;--y:7;--duration:150ms"></circle><circle cx="35" cy="23" r="2" fill="var(--color-blue-60)" class="particle" style="--x:37;--y:10;--duration:200ms"></circle></g></svg><button aria-label="いいね" title="いいね" class="style-10ttvi6"></button></div><a href="https://qiita.com/yamazon/items/563af1b485ff413d381f/likers" aria-label="413いいね" class="style-1dhjf6g">413</a></div><div class="style-92283" bis_skin_checked="1"><button aria-label="ストック" title="ストック" class="style-1xwfn2v"><svg class="style-f2ayo7" height="32" viewBox="0 0 32 32" width="32"><path d="M6.5 5H25.5C25.7761 5 26 5.22386 26 5.5V6.5C26 6.77614 25.7761 7 25.5 7H6.5C6.22386 7 6 6.77614 6 6.5V5.5C6 5.22386 6.22386 5 6.5 5ZM24 19V11.5C24 11.3674 23.9473 11.2402 23.8536 11.1464C23.7598 11.0527 23.6326 11 23.5 11H8.5C8.36739 11 8.24021 11.0527 8.14645 11.1464C8.05268 11.2402 8 11.3674 8 11.5V19C8 20.8565 8.7375 22.637 10.0503 23.9497C11.363 25.2625 13.1435 26 15 26H17C18.8565 26 20.637 25.2625 21.9497 23.9497C23.2625 22.637 24 20.8565 24 19ZM6.58579 9.58579C6.96086 9.21071 7.46957 9 8 9H24C24.5304 9 25.0391 9.21071 25.4142 9.58579C25.7893 9.96086 26 10.4696 26 11V19C26 21.3869 25.0518 23.6761 23.364 25.364C21.6761 27.0518 19.3869 28 17 28H15C12.6131 28 10.3239 27.0518 8.63604 25.364C6.94821 23.6761 6 21.3869 6 19V11C6 10.4696 6.21071 9.96086 6.58579 9.58579Z"></path></svg></button><span class="style-1ne2nll">398</span></div><button aria-label="リンク" class="style-wnfkti"><span class="material-symbols-outlined style-qlae57" aria-hidden="true">share</span></button><div class="style-79elbk" bis_skin_checked="1"><button type="button" aria-label="オプションを開く" class="style-cm5lnf"><span class="material-symbols-outlined style-1j8uoc8" aria-hidden="true">more_horiz</span></button></div></div></div></div>
+      <script type="application/json" class="js-react-on-rails-component" data-component-name="PersonalArticlePage" data-dom-id="PersonalArticlePage-react-component-c5e122e4-901d-429d-b65a-5627160c5bf5">{"authorAnalyticsTrackingId":null,"headerBanner":{"bannerDisplayKey":"header_text_banner_displayed","isDisplayable":true},"organizationAnalyticsTrackingId":null,"promptLoginMessageImageSrc":"//cdn.qiita.com/assets/public/image-qiitan_for_login_modal-014e085d3e40a240e3fe8d61b70b29a9.png","adventCalendarPromptModalQiitanUrl":"//cdn.qiita.com/assets/public/image-qiitan_for_advent_calendar-cc72df910cf1cd5b31e54b0494602884.png","isAdventCalendarPromptShow":false}</script>
+      
+<script src="./awkコマンドの基本 - Qiita_files/td_qt_access.js.download" type="text/javascript"></script><script>microadTd.QT.start({"article_category": "Bash,AWK"})</script><script>(function(d,u){var b=d.getElementsByTagName("script")[0],j=d.createElement("script");j.async=true;j.src=u;b.parentNode.insertBefore(j,b);})(document,"//img.ak.impact-ad.jp/ut/ff9a3577423c8ed5_4330.js");</script><noscript><iframe frameborder="0" height="0" src="//nspt.unitag.jp/ff9a3577423c8ed5_4330.php" width="0"></iframe></noscript><script async="" src="./awkコマンドの基本 - Qiita_files/js(2)"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'AW-878053044');</script><script>!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1792588824374455');
+fbq('track', 'PageView');</script><noscript><img height="1" src="https://www.facebook.com/tr?id=1792588824374455&amp;ev=PageView&amp;noscript=1" style="display:none" width="1" /></noscript></div><footer id="globalfooter" class="st-footer"><div class="st-footer_container" bis_skin_checked="1"><div class="st-footer_start" bis_skin_checked="1"><div class="st-footer_signature" bis_skin_checked="1"><a class="st-footer_logo" aria-label="トップに戻る" href="https://qiita.com/"><svg alt="" role="presentation" viewBox="0 0 426.57 130" xmlns="http://www.w3.org/2000/svg"><circle cx="167.08" cy="21.4" r="12.28"></circle><path d="M250.81 29.66h23.48v18.9h-23.48z"></path><path d="M300.76 105.26a22.23 22.23 0 01-6.26-.86 12.68 12.68 0 01-5.17-3 14.41 14.41 0 01-3.56-5.76 28 28 0 01-1.3-9.22V48.56h29.61v-18.9h-29.52V3.29h-20.17v83.34q0 11.16 2.83 18.27a27.71 27.71 0 007.7 11.2 26.86 26.86 0 0011.43 5.62 47.56 47.56 0 0012.34 1.53h15.16v-18zM0 61.7a58.6 58.6 0 015-24.21A62.26 62.26 0 0118.73 17.9 63.72 63.72 0 0139 4.78 64.93 64.93 0 0164 0a65 65 0 0124.85 4.78 64.24 64.24 0 0120.38 13.12A62 62 0 01123 37.49a58.6 58.6 0 015 24.21 58.34 58.34 0 01-4 21.46 62.8 62.8 0 01-10.91 18.16l11.1 11.1a10.3 10.3 0 010 14.52 10.29 10.29 0 01-14.64 0l-12.22-12.41a65 65 0 01-15.78 6.65 66.32 66.32 0 01-17.55 2.3 64.63 64.63 0 01-45.23-18A62.82 62.82 0 015 85.81 58.3 58.3 0 010 61.7zm21.64.08a43.13 43.13 0 0012.42 30.63 42.23 42.23 0 0013.43 9.09A41.31 41.31 0 0064 104.8a42 42 0 0030-12.39 42.37 42.37 0 009-13.64 43.43 43.43 0 003.3-17 43.77 43.77 0 00-3.3-17A41.7 41.7 0 0080.55 22 41.78 41.78 0 0064 18.68 41.31 41.31 0 0047.49 22a42.37 42.37 0 00-13.43 9.08 43.37 43.37 0 00-12.42 30.7zM331.89 78a47.59 47.59 0 013.3-17.73 43.22 43.22 0 019.34-14.47A44.25 44.25 0 01359 36a47.82 47.82 0 0118.81-3.58 42.72 42.72 0 019.26 1 46.5 46.5 0 018.22 2.58 40 40 0 017 3.84 44.39 44.39 0 015.71 4.63l1.22-9.47h17.35v85.83h-17.35l-1.17-9.42a42.54 42.54 0 01-5.84 4.67 43.11 43.11 0 01-7 3.79 44.86 44.86 0 01-8.17 2.59 43 43 0 01-9.22 1A47.94 47.94 0 01359 119.9a43.3 43.3 0 01-14.47-9.71 44.17 44.17 0 01-9.34-14.47 47 47 0 01-3.3-17.72zm20.27-.08a29.16 29.16 0 002.17 11.34 27 27 0 005.92 8.88 26.69 26.69 0 008.76 5.76 29.19 29.19 0 0021.44 0 26.11 26.11 0 008.72-5.76 27.57 27.57 0 005.88-8.84 29 29 0 002.16-11.38 28.62 28.62 0 00-2.16-11.22 26.57 26.57 0 00-5.93-8.8 27.68 27.68 0 00-19.51-7.9 28.29 28.29 0 00-10.77 2.05 26.19 26.19 0 00-8.71 5.75 27.08 27.08 0 00-5.84 8.8 28.94 28.94 0 00-2.13 11.31zm-194.97-30.5h19.78v73.54h-19.78zm49.25 0h19.78v73.54h-19.78z"></path><circle cx="216.33" cy="21.4" r="12.28"></circle></svg></a><div class="st-footer_catchcopy" bis_skin_checked="1">How developers code is here.</div></div><small class="st-footer_copyright">© 2011-2023<span class="ml-1of2" translate="no">Qiita Inc.</span></small></div><nav class="st-footer_navigation"><dl class="st-footer_menu"><dt class="st-footer_menuTitle">ガイドとヘルプ</dt><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/about">About</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/terms">利用規約</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/privacy">プライバシーポリシー</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="http://help.qiita.com/ja/articles/qiita-community-guideline">ガイドライン</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://help.qiita.com/ja/articles/others-brand-guideline">デザインガイドライン</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://github.com/increments/qiita-discussions/discussions/116">ご意見</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://help.qiita.com/">ヘルプ</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://qiita.com/ads?utm_source=qiita&amp;utm_medium=referral&amp;utm_content=footer">広告掲載</a></dd></dl><dl class="st-footer_menu"><dt class="st-footer_menuTitle">コンテンツ</dt><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/release-notes">リリースノート</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/official-events">公式イベント</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/official-columns">公式コラム</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/opportunities">募集</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/advent-calendar/2022">アドベントカレンダー</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/qiita-award">Qiita 表彰プログラム</a></dd><dd class="st-footer_menuItem"><a class="st-footer_menuLink" href="https://qiita.com/api/v2/docs">API</a></dd></dl><dl class="st-footer_menu"><dt class="st-footer_menuTitle">SNS</dt><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://twitter.com/qiita"><img width="14" height="14" loading="lazy" src="./awkコマンドの基本 - Qiita_files/icon-twitter_white-e2c0b9c49029b0e4e4118a06a7f75e4d.svg"><span class="ml-1of2">Qiita（キータ）公式</span></a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://twitter.com/qiita_milestone"><img width="14" height="14" loading="lazy" src="./awkコマンドの基本 - Qiita_files/icon-twitter_white-e2c0b9c49029b0e4e4118a06a7f75e4d.svg"><span class="ml-1of2">Qiita マイルストーン</span></a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://twitter.com/qiitapoi"><img width="14" height="14" loading="lazy" src="./awkコマンドの基本 - Qiita_files/icon-twitter_white-e2c0b9c49029b0e4e4118a06a7f75e4d.svg"><span class="ml-1of2">Qiita 人気の投稿</span></a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://www.facebook.com/qiita/"><img width="14" height="14" loading="lazy" src="./awkコマンドの基本 - Qiita_files/icon-facebook_white-f010f8b99b612698389aa7d0682d4ebe.svg"><span class="ml-1of2">Qiita（キータ）公式</span></a></dd></dl><dl class="st-footer_menu"><dt class="st-footer_menuTitle">Qiita 関連サービス</dt><dd class="st-footer_menuItem"><a target="_blank" rel="noopener" class="st-footer_menuLink" href="https://teams.qiita.com/">Qiita Team</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener" class="st-footer_menuLink" href="https://jobs.qiita.com/?utm_source=qiita&amp;utm_medium=referral&amp;utm_content=footer">Qiita Jobs</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener" class="st-footer_menuLink" href="https://zine.qiita.com/?utm_source=qiita&amp;utm_medium=referral&amp;utm_content=footer">Qiita Zine</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener noreferrer" class="st-footer_menuLink" href="https://suzuri.jp/qiita">Qiita 公式ショップ</a></dd></dl><dl class="st-footer_menu"><dt class="st-footer_menuTitle">運営</dt><dd class="st-footer_menuItem"><a target="_blank" rel="noopener" class="st-footer_menuLink" href="https://corp.qiita.com/company/">運営会社</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener" class="st-footer_menuLink" href="https://corp.qiita.com/jobs/">採用情報</a></dd><dd class="st-footer_menuItem"><a target="_blank" rel="noopener" class="st-footer_menuLink" href="https://blog.qiita.com/">Qiita Blog</a></dd></dl></nav></div></footer><div id="Snackbar-react-component-12d1f8d0-7da5-4de6-8b83-ec8df39a049e" bis_skin_checked="1"></div>
+      <script type="application/json" class="js-react-on-rails-component" data-component-name="Snackbar" data-dom-id="Snackbar-react-component-12d1f8d0-7da5-4de6-8b83-ec8df39a049e">{}</script>
+      
+<div id="LoginModal-react-component-660cd659-6838-44ee-b707-8951bb2ee009" bis_skin_checked="1"></div>
+      <script type="application/json" class="js-react-on-rails-component" data-component-name="LoginModal" data-dom-id="LoginModal-react-component-660cd659-6838-44ee-b707-8951bb2ee009">{"imageUrl":"//cdn.qiita.com/assets/public/image-qiitan_for_login_modal-014e085d3e40a240e3fe8d61b70b29a9.png"}</script>
+      
+</div><script type="text/javascript" charset="UTF-8">!function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],this["_"+t].push(Array.prototype.slice.call(arguments)),this}},s=["blockEvents","unblockEvents","setSignedMode","setAnonymousMode","resetUUID","addRecord","fetchGlobalID","set","trackEvent","trackPageview","trackClicks","ready"],n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)}}("Treasure",this);</script><script type="text/javascript" charset="UTF-8" src="./awkコマンドの基本 - Qiita_files/aid"></script><img width="0px" height="0px" src="./awkコマンドの基本 - Qiita_files/tr" style="display: none;"><div id="dataContainer" style="display: none;" data-config="{&quot;actionPath&quot;:&quot;public/items#show&quot;,&quot;settings&quot;:{&quot;analyticsTrackingId&quot;:&quot;G-KEVS5DBRVN&quot;,&quot;tagManagerId&quot;:&quot;GTM-W9W5TX4&quot;,&quot;assetsMap&quot;:{},&quot;csrfToken&quot;:&quot;aOlPA1m9vMqVbll93Z6XYd4ZUEYEvZBlhy+JM6IP69grTpXw4gw7he7bxNMR9trTJBNezIvJqluqWwuE5tEoZg==&quot;,&quot;locale&quot;:&quot;ja&quot;,&quot;pushOne&quot;:{&quot;accessToken&quot;:&quot;4bc4bb057a0601d388a7b9e499ca2307e9eb4fc172804e310c59e511d7cac356&quot;,&quot;dialogImageUrl&quot;:&quot;//cdn.qiita.com/assets/public/push_notification/image-qiitan-572179a3bbde375850422ea48b2b6272.png&quot;}},&quot;currentUser&quot;:{&quot;defaultStockItemCategories&quot;:[{&quot;encryptedId&quot;:&quot;0/mLekNnT4BG/mc1EmMP0F/OVMWzzd0pZMBrLemSF9tj0Rk=--pAupHS4peVcuVO8G--/XW0eZ9eJdvWIqX4fqpjfQ==&quot;,&quot;isDefault&quot;:true,&quot;isDestroyableByViewer&quot;:false,&quot;isUpdatableByViewer&quot;:false,&quot;name&quot;:&quot;あとで読む&quot;,&quot;stockItemsCount&quot;:0}],&quot;encryptedId&quot;:&quot;UNvn/DY8MbY+wdDw/05MoCz3+YGhNprw--7oYFWqGkXsDJKXf1--8qZ97ZrOwEPF1upPYKjf5A==&quot;,&quot;isBetaReleaseEnabled&quot;:false,&quot;isEarlyAdapter&quot;:false,&quot;isEmailConfirmed&quot;:false,&quot;isJobseeker&quot;:false,&quot;isStaff&quot;:false,&quot;isTeamOnly&quot;:false,&quot;monthlyPublicImageUploadableSizeLimit&quot;:104857600,&quot;name&quot;:&quot;&quot;,&quot;contribution&quot;:0,&quot;originalId&quot;:3527281,&quot;profileImageUrl&quot;:&quot;https://avatars.githubusercontent.com/u/20800131?v=4&quot;,&quot;profileImageUrlW48&quot;:&quot;https://qiita-user-profile-images.imgix.net/https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F20800131%3Fv%3D4?ixlib=rb-4.0.0\u0026auto=compress%2Cformat\u0026lossless=0\u0026w=48\u0026s=6ae22607e1f63dede1c2d527fd7e283c&quot;,&quot;profileImageUrlW75&quot;:&quot;https://qiita-user-profile-images.imgix.net/https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F20800131%3Fv%3D4?ixlib=rb-4.0.0\u0026auto=compress%2Cformat\u0026lossless=0\u0026w=75\u0026s=3b3387f982d5cf88a9fe51009a12968d&quot;,&quot;remainingPublicImageUploadableSizeInCurrentMonth&quot;:104857600,&quot;unreadNotificationsCount&quot;:0,&quot;urlName&quot;:&quot;Toru52&quot;,&quot;webPushNotificationKey&quot;:&quot;961d7a216af085ba3e35&quot;,&quot;organizations&quot;:{&quot;edges&quot;:[],&quot;totalCount&quot;:0}},&quot;additionalParams&quot;:{&quot;query_parameters&quot;:{},&quot;path_parameters&quot;:{&quot;controller&quot;:&quot;public/items&quot;,&quot;action&quot;:&quot;show&quot;,&quot;user_id&quot;:&quot;yamazon&quot;,&quot;type&quot;:&quot;items&quot;,&quot;id&quot;:&quot;563af1b485ff413d381f&quot;},&quot;request_id&quot;:&quot;8e2dce08-1eeb-424c-97b5-9a31e7c91368&quot;,&quot;user_id&quot;:3527281}}" bis_skin_checked="1"><script type="application/json" data-js-react-on-rails-store="AppStoreWithReactOnRails">{"snackbar":{"type":"","body":"","isActive":false},"adventCalendar":{"adventCalendar":{"currentDateTime":"Sun, 06 Aug 2023 11:18:14 +0900","isCalendarCreatable":false,"isLatestHeldYear":true,"isPreRegistering":false,"isRankingBeingHeld":false,"isSubscribable":false,"year":2022,"years":[2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011]}},"article":{"article":{"body":"\n\u003ch2\u003e\n\u003cspan id=\"bashにおけるawkコマンドの基本\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#bash%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8Bawk%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AE%E5%9F%BA%E6%9C%AC\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003ebashにおけるawkコマンドの基本\u003c/h2\u003e\n\n\u003cp\u003eawkについて調べながら勉強したので、個人的にまとめてみました\u003c/p\u003e\n\n\u003cp\u003eawkは入力として受け取った文字列に対して、フィールド区切り文字やレコード区切り文字を指定して、\u003cbr\u003e\u003cbr\u003e\n「列」に対する処理を行うためのコマンドです。また、awk単体としても、1つのプログラムです。  \u003c/p\u003e\n\n\u003cp\u003e\u003c/p\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"awkの基本書式\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#awk%E3%81%AE%E5%9F%BA%E6%9C%AC%E6%9B%B8%E5%BC%8F\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eawkの基本書式\u003c/h2\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eawk\u003c/span\u003e \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[フィールド区切り文字(複数可能)]'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'変数=xx'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{awkコマンド}'\u003c/span\u003e file\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003cul\u003e\n\u003cli\u003e今回は標準出力を行うawkコマンド「print」を利用し、awkで指定したフィールドを取得します\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003ch4\u003e\n\u003cspan id=\"awkで1フィールド目を取り出すコマンドはprint-1です\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#awk%E3%81%A71%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AFprint-1%E3%81%A7%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eawkで1フィールド目を取り出すコマンドは、「print $1」です\u003c/h4\u003e\n\n\u003ch1\u003e\n\u003cspan id=\"1フィールド目を出力-print-1\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#1%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-1\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003e1フィールド目を出力 print $1\u003c/h1\u003e\n\n\u003cp\u003eオプションである -F'[フィールド区切り文字]'　を指定しない場合、\u003cbr\u003e\n区切り文字には、タブまたは半角スペースが選択されます\u003cbr\u003e\necho からパイプで渡してみます\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1 2 3 4 |awk \u003cspan class=\"s1\"\u003e'{print $1}'\u003c/span\u003e\n1\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"2フィールド目を出力-print-2\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#2%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-2\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003e2フィールド目を出力 print $2\u003c/h2\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1 2 3 4 |awk \u003cspan class=\"s1\"\u003e'{print $2}'\u003c/span\u003e\n2\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"0はパイプやファイルから渡された文字列全てという意味です-print-0\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#0%E3%81%AF%E3%83%91%E3%82%A4%E3%83%97%E3%82%84%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8B%E3%82%89%E6%B8%A1%E3%81%95%E3%82%8C%E3%81%9F%E6%96%87%E5%AD%97%E5%88%97%E5%85%A8%E3%81%A6%E3%81%A8%E3%81%84%E3%81%86%E6%84%8F%E5%91%B3%E3%81%A7%E3%81%99-print-0\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003e$0は「パイプやファイルから渡された、文字列全て」という意味です print $0\u003c/h2\u003e\n\n\u003cp\u003eprintのみも、一緒\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1 2 3 4 |awk \u003cspan class=\"s1\"\u003e'{print $0}'\u003c/span\u003e\n1 2 3 4\n\n\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1 2 3 4 |awk \u003cspan class=\"s1\"\u003e'{print}'\u003c/span\u003e\n1 2 3 4\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"フィールド区切り文字にを指定してみます\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AB%E3%82%92%E6%8C%87%E5%AE%9A%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eフィールド区切り文字に「:」を指定してみます\u003c/h2\u003e\n\n\u003cp\u003e1フィールド目を出力\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2:3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:]'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1}'\u003c/span\u003e\n1\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003cp\u003e2フィールド目を出力\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2:3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:]'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $2}'\u003c/span\u003e\n2\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"フィールド区切り文字は複数指定できます\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AF%E8%A4%87%E6%95%B0%E6%8C%87%E5%AE%9A%E3%81%A7%E3%81%8D%E3%81%BE%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eフィールド区切り文字は複数指定できます\u003c/h2\u003e\n\n\u003cp\u003eフィールド区切り文字に「:」と「/」を指定\u003cbr\u003e\nならべて書くことで、「:」と「/」の1つ1つがフィールド区切り文字として扱われます\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $3}'\u003c/span\u003e\n3\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"複数フィールドの出力-print-12\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#%E8%A4%87%E6%95%B0%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E3%81%AE%E5%87%BA%E5%8A%9B-print-12\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003e複数フィールドの出力 print $1,$2\u003c/h2\u003e\n\n\u003ch4\u003e\n\u003cspan id=\"print-12-のようにカンマで区切って記述します\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#print-12-%E3%81%AE%E3%82%88%E3%81%86%E3%81%AB%E3%82%AB%E3%83%B3%E3%83%9E%E3%81%A7%E5%8C%BA%E5%88%87%E3%81%A3%E3%81%A6%E8%A8%98%E8%BF%B0%E3%81%97%E3%81%BE%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eprint $1,$2 のようにカンマで区切って記述します\u003c/h4\u003e\n\n\u003cp\u003e複数フィールドの出力は、半角スペースで区切られます\u003cbr\u003e\nこれは、OFSを指定していないため ※OFSについては後述します\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1,$2}'\u003c/span\u003e\n1 2\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"ofs\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#ofs\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eOFS\u003c/h2\u003e\n\n\u003cp\u003e「OFS」は、Output Field Separatorの略で、awkの組み込み変数であり、「出力のフィールド区切り文字」を指定します\u003cbr\u003e\n下記では「#」を指定し、フィールドの出力を「#」で区切ります\u003cbr\u003e\nまた、「-v」 はvariable(変数)を指定する、という意味のオプションです\u003c/p\u003e\n\n\u003cp\u003e-v '変数=xx'\u003cbr\u003e\nという形式で記述します\u003c/p\u003e\n\n\u003cp\u003e-F'[フィールド区切り文字]'で、「入力のフィールド区切り文字」については指定しますが、これは、処理で一番よく使われるためオプション化されているだけ、という違いです。\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'OFS=#'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1,$3}'\u003c/span\u003e\n1#3\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"rs\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#rs\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eRS\u003c/h2\u003e\n\n\u003cp\u003eRSはRecord Separatorの略で、awkの組み込み変数です\u003cbr\u003e\n「入力のレコード区切り文字」を指定、下記では「/」を指定します\u003cbr\u003e\nレコードは「/」を区切り文字にして、「1:2」と「3:4」に分けられます\u003cbr\u003e\n「/」をレコード区切り文字にして、各々のレコードから1フィールド目を取得します\u003cbr\u003e\n出力は改行で区切って出力されます　※これはORSが指定されていないため ORSは下述\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:]'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'RS=/'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1}'\u003c/span\u003e\n1\n3\n\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:]'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'RS=/'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1,$2}'\u003c/span\u003e\n1 2\n3 4\n\u003cspan class=\"c\"\u003e# フィールド区切り文字とレコード区切り文字で同じ文字がある場合、レコード区切り文字が優先されます\u003c/span\u003e\n\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'RS=/'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1,$2}'\u003c/span\u003e\n1 2\n3 4\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"ors\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#ors\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eORS\u003c/h2\u003e\n\n\u003cp\u003e「ORS」は、Output Record Separatorの略で、awkの組み込み変数であり、「出力のレコード区切り文字」を指定します\u003cbr\u003e\n下記では「This is ORS」を指定し、レコードの出力を区切ります\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'RS=/'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'ORS=This is ORS'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1,$2}'\u003c/span\u003e\n1 2This is ORS3 4\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"ofsとorsを明示します\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#ofs%E3%81%A8ors%E3%82%92%E6%98%8E%E7%A4%BA%E3%81%97%E3%81%BE%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eOFSとORSを明示します\u003c/h2\u003e\n\n\u003cp\u003eOFSは空白4つ、ORSは改行2つにしてみます\u003cbr\u003e\n\\n は改行\u003c/p\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'OFS=    '\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'RS=/'\u003c/span\u003e \u003cspan class=\"nt\"\u003e-v\u003c/span\u003e \u003cspan class=\"s1\"\u003e'ORS=\\n\\n'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $1,$2}'\u003c/span\u003e\n1    2\n\n3    4\n\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"最終フィールドを取り出す変数としてnfが用意されています\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#%E6%9C%80%E7%B5%82%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E5%A4%89%E6%95%B0%E3%81%A8%E3%81%97%E3%81%A6nf%E3%81%8C%E7%94%A8%E6%84%8F%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%81%BE%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003e最終フィールドを取り出す変数として$NFが用意されています\u003c/h2\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $NF}'\u003c/span\u003e\n4\n\n\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{print $NF-1}'\u003c/span\u003e\n3\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"printの他にprintfもつかえます\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#print%E3%81%AE%E4%BB%96%E3%81%ABprintf%E3%82%82%E3%81%A4%E3%81%8B%E3%81%88%E3%81%BE%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003eprintの他に、printfもつかえます\u003c/h2\u003e\n\n\u003cdiv class=\"code-frame\" data-lang=\"sh\"\u003e\u003cdiv class=\"highlight\"\u003e\u003cpre\u003e\u003ccode\u003e\u003cspan class=\"nb\"\u003eecho \u003c/span\u003e1:2/3:4 |awk \u003cspan class=\"nt\"\u003e-F\u003c/span\u003e\u003cspan class=\"s1\"\u003e'[:/]'\u003c/span\u003e \u003cspan class=\"s1\"\u003e'{printf \"%s\\n%s\\n\",$NF,$NF-1}'\u003c/span\u003e\n4\n3\n\n\u003c/code\u003e\u003c/pre\u003e\u003c/div\u003e\u003c/div\u003e\n\n\u003ch2\u003e\n\u003cspan id=\"他にもcsv形式を扱う時などに利用するfpat変数などがあります\" class=\"fragment\"\u003e\u003c/span\u003e\u003ca href=\"#%E4%BB%96%E3%81%AB%E3%82%82csv%E5%BD%A2%E5%BC%8F%E3%82%92%E6%89%B1%E3%81%86%E6%99%82%E3%81%AA%E3%81%A9%E3%81%AB%E5%88%A9%E7%94%A8%E3%81%99%E3%82%8Bfpat%E5%A4%89%E6%95%B0%E3%81%AA%E3%81%A9%E3%81%8C%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99\"\u003e\u003ci class=\"fa fa-link\"\u003e\u003c/i\u003e\u003c/a\u003e他にも、csv形式を扱う時などに利用する\"FPAT\"変数などがあります\u003c/h2\u003e\n\n\u003cp\u003e参考：\u003ca href=\"http://codezine.jp/article/detail/8323\" class=\"autolink\" rel=\"nofollow noopener\" target=\"_blank\"\u003ehttp://codezine.jp/article/detail/8323\u003c/a\u003e\u003c/p\u003e\n","createdAt":"2016-03-06T11:03:09Z","elapsedYearsFromLastModifiedAt":7,"encryptedId":"w7v7joUA0H1b40TKXIsdrYpR5oV8W5If--mmdI1ZPT1xh3cZEO--O7+hoidQDnkTFspSLfcmIw==","isBanned":false,"isDeprecated":true,"isDestroyableByViewer":false,"isEditRequestReadableByViewer":true,"isEditRequestSendableByViewer":true,"isLikableByViewer":true,"isLikedByViewer":false,"isPublic":true,"isSlide":false,"isStockableByViewer":true,"isStockedByViewer":false,"isSubscribableByViewer":true,"isSubscribedByViewer":false,"isUpdatableByViewer":false,"isUpdated":true,"lastModifiedAt":"2016-03-14T14:38:39Z","publishedAt":"2016-03-06T11:03:09Z","likesCount":413,"linkUrl":"https://qiita.com/yamazon/items/563af1b485ff413d381f","organization":null,"stockedCount":398,"title":"awkコマンドの基本","toc":"\u003cul\u003e\n\u003cli\u003e\n\u003ca href=\"#bash%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8Bawk%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AE%E5%9F%BA%E6%9C%AC\"\u003ebashにおけるawkコマンドの基本\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#awk%E3%81%AE%E5%9F%BA%E6%9C%AC%E6%9B%B8%E5%BC%8F\"\u003eawkの基本書式\u003c/a\u003e\n\u003cul\u003e\n\u003cli\u003e\n\u003cul\u003e\n\u003cli\u003e\n\u003ca href=\"#awk%E3%81%A71%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%E3%81%AFprint-1%E3%81%A7%E3%81%99\"\u003eawkで1フィールド目を取り出すコマンドは、「print $1」です\u003c/a\u003e\n\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#1%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-1\"\u003e1フィールド目を出力 print $1\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#2%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E7%9B%AE%E3%82%92%E5%87%BA%E5%8A%9B-print-2\"\u003e2フィールド目を出力 print $2\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#0%E3%81%AF%E3%83%91%E3%82%A4%E3%83%97%E3%82%84%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8B%E3%82%89%E6%B8%A1%E3%81%95%E3%82%8C%E3%81%9F%E6%96%87%E5%AD%97%E5%88%97%E5%85%A8%E3%81%A6%E3%81%A8%E3%81%84%E3%81%86%E6%84%8F%E5%91%B3%E3%81%A7%E3%81%99-print-0\"\u003e$0は「パイプやファイルから渡された、文字列全て」という意味です print $0\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AB%E3%82%92%E6%8C%87%E5%AE%9A%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%99\"\u003eフィールド区切り文字に「:」を指定してみます\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E5%8C%BA%E5%88%87%E3%82%8A%E6%96%87%E5%AD%97%E3%81%AF%E8%A4%87%E6%95%B0%E6%8C%87%E5%AE%9A%E3%81%A7%E3%81%8D%E3%81%BE%E3%81%99\"\u003eフィールド区切り文字は複数指定できます\u003c/a\u003e\n\u003cul\u003e\n\u003cli\u003e\n\u003cul\u003e\n\u003cli\u003e\n\u003ca href=\"#print-12-%E3%81%AE%E3%82%88%E3%81%86%E3%81%AB%E3%82%AB%E3%83%B3%E3%83%9E%E3%81%A7%E5%8C%BA%E5%88%87%E3%81%A3%E3%81%A6%E8%A8%98%E8%BF%B0%E3%81%97%E3%81%BE%E3%81%99\"\u003eprint $1,$2 のようにカンマで区切って記述します\u003c/a\u003e\n\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#ofs\"\u003eOFS\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#rs\"\u003eRS\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#ors\"\u003eORS\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#ofs%E3%81%A8ors%E3%82%92%E6%98%8E%E7%A4%BA%E3%81%97%E3%81%BE%E3%81%99\"\u003eOFSとORSを明示します\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#%E6%9C%80%E7%B5%82%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E3%82%92%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%99%E5%A4%89%E6%95%B0%E3%81%A8%E3%81%97%E3%81%A6nf%E3%81%8C%E7%94%A8%E6%84%8F%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%81%BE%E3%81%99\"\u003e最終フィールドを取り出す変数として$NFが用意されています\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#print%E3%81%AE%E4%BB%96%E3%81%ABprintf%E3%82%82%E3%81%A4%E3%81%8B%E3%81%88%E3%81%BE%E3%81%99\"\u003eprintの他に、printfもつかえます\u003c/a\u003e\n\u003c/li\u003e\n\u003cli\u003e\n\u003ca href=\"#%E4%BB%96%E3%81%AB%E3%82%82csv%E5%BD%A2%E5%BC%8F%E3%82%92%E6%89%B1%E3%81%86%E6%99%82%E3%81%AA%E3%81%A9%E3%81%AB%E5%88%A9%E7%94%A8%E3%81%99%E3%82%8Bfpat%E5%A4%89%E6%95%B0%E3%81%AA%E3%81%A9%E3%81%8C%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99\"\u003e他にも、csv形式を扱う時などに利用する\"FPAT\"変数などがあります\u003c/a\u003e\n\u003c/li\u003e\n\u003c/ul\u003e\n","totalPv":430430,"uuid":"563af1b485ff413d381f","banReason":null,"adventCalendarItem":null,"author":{"encryptedId":"x256BE55x9SVOkTCD7lQ/VTOJmQ=--rasLMhSI592i+lId--/sskwZ7Ypjr+icJRvsquow==","isBlockingViewer":false,"isFollowableByViewer":true,"isFollowedByViewer":false,"isTweetWebNotificationReceivable":true,"profileImageUrlW48":"https://qiita-user-profile-images.imgix.net/https%3A%2F%2Fqiita-image-store.s3.amazonaws.com%2F0%2F35156%2Fprofile-images%2F1538791621?ixlib=rb-4.0.0\u0026auto=compress%2Cformat\u0026lossless=0\u0026w=48\u0026s=c927b2f5727487266e95a7517f32050a","urlName":"yamazon","twitterUrlName":null,"name":"Tetsuya Yamamoto","organizations":{"edges":[]}},"tags":[{"name":"Bash","urlName":"bash"},{"name":"AWK","urlName":"awk"}],"followingLikers":[],"recentlyFollowingLikers":[],"postingCampaign":null},"comments":[],"client":null,"adsEventEmitter":null}}</script></div><ul class="dropdown-menu textcomplete-dropdown" style="display: none; position: absolute; z-index: 1000;"></ul><deepl-input-controller><template shadowrootmode="open"><link rel="stylesheet" href="chrome-extension://cofdbpoegempjloogbagkncekinflcnj/build/content.css"><div><div class="dl-input-translation-container svelte-ju4595"><div></div></div></div></template></deepl-input-controller><iframe name="google_ads_top_frame" id="google_ads_top_frame" style="display: none; position: fixed; left: -999px; top: -999px; width: 0px; height: 0px;" src="./awkコマンドの基本 - Qiita_files/saved_resource(4).html"></iframe><div id="itm_4330" bis_skin_checked="1" style="visibility: hidden; display: none;"></div><img src="./awkコマンドの基本 - Qiita_files/pixel" width="1" height="1" style="display: none;"><img src="./awkコマンドの基本 - Qiita_files/rep" style="display: none;"><iframe src="./awkコマンドの基本 - Qiita_files/aframe.html" width="0" height="0" style="display: none;" bis_size="{&quot;x&quot;:0,&quot;y&quot;:190,&quot;w&quot;:0,&quot;h&quot;:0,&quot;abs_x&quot;:0,&quot;abs_y&quot;:190}"></iframe></body><script type="text/javascript" async="" src="./awkコマンドの基本 - Qiita_files/f(2).txt"></script><script type="text/javascript" async="" src="./awkコマンドの基本 - Qiita_files/f(3).txt"></script><iframe src="./awkコマンドの基本 - Qiita_files/container(1).html" style="visibility: hidden; display: none;"></iframe><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open"><style>
+  div.grammarly-desktop-integration {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select:none;
+    user-select:none;
+  }
+
+  div.grammarly-desktop-integration:before {
+    content: attr(data-content);
+  }
+</style><div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration" data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}"></div></template></grammarly-desktop-integration></html>

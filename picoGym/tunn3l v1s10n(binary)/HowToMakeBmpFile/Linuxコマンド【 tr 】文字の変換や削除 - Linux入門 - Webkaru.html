@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<!-- saved from url=(0037)https://webkaru.net/linux/tr-command/ -->
+<html class=" js no-touch svg inlinesvg svgclippaths no-ie8compat" lang="ja" style=""><script src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f.txt"></script><script src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(1).txt"></script><script src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(2).txt" id="google_shimpl"></script><script type="text/javascript" async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/analytics.js.download"></script><script type="text/javascript" async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/js"></script><script>
+    window[Symbol.for('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')] = new (class PostClient {
+    constructor(name, destination) {
+        this.name = name;
+        this.destination = destination;
+        this.serverListeners = {};
+        this.bgRequestsListeners = {};
+        this.bgEventsListeners = {};
+        window.addEventListener('message', (message) => {
+            const data = message.data;
+            const isNotForMe = !(data.destination && data.destination === this.name);
+            const hasNotEventProp = !data.event;
+            if (isNotForMe || hasNotEventProp) {
+                return;
+            }
+            if (data.event === 'MARIO_POST_SERVER__BG_RESPONSE') {
+                const response = data.args;
+                if (this.hasBgRequestListener(response.requestId)) {
+                    try {
+                        this.bgRequestsListeners[response.requestId](response.response);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                    delete this.bgRequestsListeners[response.requestId];
+                }
+            }
+            else if (data.event === 'MARIO_POST_SERVER__BG_EVENT') {
+                const response = data.args;
+                if (this.hasBgEventListener(response.event)) {
+                    try {
+                        this.bgEventsListeners[data.id](response.payload);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }
+            }
+            else if (this.hasServerListener(data.event)) {
+                try {
+                    this.serverListeners[data.event](data.args);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }
+            else {
+                console.log(`event not handled: ${data.event}`);
+            }
+        });
+    }
+    emitToServer(event, args) {
+        const id = this.generateUIID();
+        const message = {
+            args,
+            destination: this.destination,
+            event,
+            id,
+        };
+        window.postMessage(message, location.origin);
+        return id;
+    }
+    emitToBg(bgEventName, args) {
+        const requestId = this.generateUIID();
+        const request = { bgEventName, requestId, args };
+        this.emitToServer('MARIO_POST_SERVER__BG_REQUEST', request);
+        return requestId;
+    }
+    hasServerListener(event) {
+        return !!this.serverListeners[event];
+    }
+    hasBgRequestListener(requestId) {
+        return !!this.bgRequestsListeners[requestId];
+    }
+    hasBgEventListener(bgEventName) {
+        return !!this.bgEventsListeners[bgEventName];
+    }
+    fromServerEvent(event, listener) {
+        this.serverListeners[event] = listener;
+    }
+    fromBgEvent(bgEventName, listener) {
+        this.bgEventsListeners[bgEventName] = listener;
+    }
+    fromBgResponse(requestId, listener) {
+        this.bgRequestsListeners[requestId] = listener;
+    }
+    generateUIID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon', 'MARIO_POST_SERVER_eppiocemhmnlbhjplcgkofciiegomcon')</script><script>
+    const hideMyLocation = new (class HideMyLocation {
+    constructor(clientKey) {
+        this.clientKey = clientKey;
+        this.watchIDs = {};
+        this.client = window[Symbol.for(clientKey)];
+        const getCurrentPosition = navigator.geolocation.getCurrentPosition;
+        const watchPosition = navigator.geolocation.watchPosition;
+        const clearWatch = navigator.geolocation.clearWatch;
+        const self = this;
+        navigator.geolocation.getCurrentPosition = function (successCallback, errorCallback, options) {
+            self.handle(getCurrentPosition, 'GET', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.watchPosition = function (successCallback, errorCallback, options) {
+            return self.handle(watchPosition, 'WATCH', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.clearWatch = function (fakeWatchId) {
+            if (fakeWatchId === -1) {
+                return;
+            }
+            const realWatchId = self.watchIDs[fakeWatchId];
+            delete self.watchIDs[fakeWatchId];
+            return clearWatch.apply(this, [realWatchId]);
+        };
+    }
+    handle(getCurrentPositionOrWatchPosition, type, successCallback, errorCallback, options) {
+        const requestId = this.client.emitToBg('HIDE_MY_LOCATION__GET_LOCATION');
+        let fakeWatchId = this.getRandomInt(0, 100000);
+        this.client.fromBgResponse(requestId, (response) => {
+            if (response.enabled) {
+                if (response.status === 'SUCCESS') {
+                    const position = this.map(response);
+                    successCallback(position);
+                }
+                else {
+                    const error = this.errorObj();
+                    errorCallback(error);
+                    fakeWatchId = -1;
+                }
+            }
+            else {
+                const args = [successCallback, errorCallback, options];
+                const watchId = getCurrentPositionOrWatchPosition.apply(navigator.geolocation, args);
+                if (type === 'WATCH') {
+                    this.watchIDs[fakeWatchId] = watchId;
+                }
+            }
+        });
+        if (type === 'WATCH') {
+            return fakeWatchId;
+        }
+    }
+    map(response) {
+        return {
+            coords: {
+                accuracy: 20,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                latitude: response.latitude,
+                longitude: response.longitude,
+                speed: null,
+            },
+            timestamp: Date.now(),
+        };
+    }
+    errorObj() {
+        return {
+            code: 1,
+            message: 'User denied Geolocation',
+        };
+    }
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')
+  </script><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script>if(navigator.userAgent.match(/MSIE|Internet Explorer/i)||navigator.userAgent.match(/Trident\/7\..*?rv:11/i)){var href=document.location.href;if(!href.match(/[?&]nowprocket/)){if(href.indexOf("?")==-1){if(href.indexOf("#")==-1){document.location.href=href+"?nowprocket=1"}else{document.location.href=href.replace("#","?nowprocket=1#")}}else{if(href.indexOf("#")==-1){document.location.href=href+"&nowprocket=1"}else{document.location.href=href.replace("#","&nowprocket=1#")}}}}</script><script>class RocketLazyLoadScripts{constructor(){this.v="1.2.3",this.triggerEvents=["keydown","mousedown","mousemove","touchmove","touchstart","touchend","wheel"],this.userEventHandler=this._triggerListener.bind(this),this.touchStartHandler=this._onTouchStart.bind(this),this.touchMoveHandler=this._onTouchMove.bind(this),this.touchEndHandler=this._onTouchEnd.bind(this),this.clickHandler=this._onClick.bind(this),this.interceptedClicks=[],window.addEventListener("pageshow",t=>{this.persisted=t.persisted}),window.addEventListener("DOMContentLoaded",()=>{this._preconnect3rdParties()}),this.delayedScripts={normal:[],async:[],defer:[]},this.trash=[],this.allJQueries=[]}_addUserInteractionListener(t){if(document.hidden){t._triggerListener();return}this.triggerEvents.forEach(e=>window.addEventListener(e,t.userEventHandler,{passive:!0})),window.addEventListener("touchstart",t.touchStartHandler,{passive:!0}),window.addEventListener("mousedown",t.touchStartHandler),document.addEventListener("visibilitychange",t.userEventHandler)}_removeUserInteractionListener(){this.triggerEvents.forEach(t=>window.removeEventListener(t,this.userEventHandler,{passive:!0})),document.removeEventListener("visibilitychange",this.userEventHandler)}_onTouchStart(t){"HTML"!==t.target.tagName&&(window.addEventListener("touchend",this.touchEndHandler),window.addEventListener("mouseup",this.touchEndHandler),window.addEventListener("touchmove",this.touchMoveHandler,{passive:!0}),window.addEventListener("mousemove",this.touchMoveHandler),t.target.addEventListener("click",this.clickHandler),this._renameDOMAttribute(t.target,"onclick","rocket-onclick"),this._pendingClickStarted())}_onTouchMove(t){window.removeEventListener("touchend",this.touchEndHandler),window.removeEventListener("mouseup",this.touchEndHandler),window.removeEventListener("touchmove",this.touchMoveHandler,{passive:!0}),window.removeEventListener("mousemove",this.touchMoveHandler),t.target.removeEventListener("click",this.clickHandler),this._renameDOMAttribute(t.target,"rocket-onclick","onclick"),this._pendingClickFinished()}_onTouchEnd(t){window.removeEventListener("touchend",this.touchEndHandler),window.removeEventListener("mouseup",this.touchEndHandler),window.removeEventListener("touchmove",this.touchMoveHandler,{passive:!0}),window.removeEventListener("mousemove",this.touchMoveHandler)}_onClick(t){t.target.removeEventListener("click",this.clickHandler),this._renameDOMAttribute(t.target,"rocket-onclick","onclick"),this.interceptedClicks.push(t),t.preventDefault(),t.stopPropagation(),t.stopImmediatePropagation(),this._pendingClickFinished()}_replayClicks(){window.removeEventListener("touchstart",this.touchStartHandler,{passive:!0}),window.removeEventListener("mousedown",this.touchStartHandler),this.interceptedClicks.forEach(t=>{t.target.dispatchEvent(new MouseEvent("click",{view:t.view,bubbles:!0,cancelable:!0}))})}_waitForPendingClicks(){return new Promise(t=>{this._isClickPending?this._pendingClickFinished=t:t()})}_pendingClickStarted(){this._isClickPending=!0}_pendingClickFinished(){this._isClickPending=!1}_renameDOMAttribute(t,e,r){t.hasAttribute&&t.hasAttribute(e)&&(event.target.setAttribute(r,event.target.getAttribute(e)),event.target.removeAttribute(e))}_triggerListener(){this._removeUserInteractionListener(this),"loading"===document.readyState?document.addEventListener("DOMContentLoaded",this._loadEverythingNow.bind(this)):this._loadEverythingNow()}_preconnect3rdParties(){let t=[];document.querySelectorAll("script[type=rocketlazyloadscript]").forEach(e=>{if(e.hasAttribute("src")){let r=new URL(e.src).origin;r!==location.origin&&t.push({src:r,crossOrigin:e.crossOrigin||"module"===e.getAttribute("data-rocket-type")})}}),t=[...new Map(t.map(t=>[JSON.stringify(t),t])).values()],this._batchInjectResourceHints(t,"preconnect")}async _loadEverythingNow(){this.lastBreath=Date.now(),this._delayEventListeners(this),this._delayJQueryReady(this),this._handleDocumentWrite(),this._registerAllDelayedScripts(),this._preloadAllScripts(),await this._loadScriptsFromList(this.delayedScripts.normal),await this._loadScriptsFromList(this.delayedScripts.defer),await this._loadScriptsFromList(this.delayedScripts.async);try{await this._triggerDOMContentLoaded(),await this._triggerWindowLoad()}catch(t){console.error(t)}window.dispatchEvent(new Event("rocket-allScriptsLoaded")),this._waitForPendingClicks().then(()=>{this._replayClicks()}),this._emptyTrash()}_registerAllDelayedScripts(){document.querySelectorAll("script[type=rocketlazyloadscript]").forEach(t=>{t.hasAttribute("data-rocket-src")?t.hasAttribute("async")&&!1!==t.async?this.delayedScripts.async.push(t):t.hasAttribute("defer")&&!1!==t.defer||"module"===t.getAttribute("data-rocket-type")?this.delayedScripts.defer.push(t):this.delayedScripts.normal.push(t):this.delayedScripts.normal.push(t)})}async _transformScript(t){return new Promise((await this._littleBreath(),navigator.userAgent.indexOf("Firefox/")>0||""===navigator.vendor)?e=>{let r=document.createElement("script");[...t.attributes].forEach(t=>{let e=t.nodeName;"type"!==e&&("data-rocket-type"===e&&(e="type"),"data-rocket-src"===e&&(e="src"),r.setAttribute(e,t.nodeValue))}),t.text&&(r.text=t.text),r.hasAttribute("src")?(r.addEventListener("load",e),r.addEventListener("error",e)):(r.text=t.text,e());try{t.parentNode.replaceChild(r,t)}catch(i){e()}}:async e=>{function r(){t.setAttribute("data-rocket-status","failed"),e()}try{let i=t.getAttribute("data-rocket-type"),n=t.getAttribute("data-rocket-src");t.text,i?(t.type=i,t.removeAttribute("data-rocket-type")):t.removeAttribute("type"),t.addEventListener("load",function r(){t.setAttribute("data-rocket-status","executed"),e()}),t.addEventListener("error",r),n?(t.removeAttribute("data-rocket-src"),t.src=n):t.src="data:text/javascript;base64,"+window.btoa(unescape(encodeURIComponent(t.text)))}catch(s){r()}})}async _loadScriptsFromList(t){let e=t.shift();return e&&e.isConnected?(await this._transformScript(e),this._loadScriptsFromList(t)):Promise.resolve()}_preloadAllScripts(){this._batchInjectResourceHints([...this.delayedScripts.normal,...this.delayedScripts.defer,...this.delayedScripts.async],"preload")}_batchInjectResourceHints(t,e){var r=document.createDocumentFragment();t.forEach(t=>{let i=t.getAttribute&&t.getAttribute("data-rocket-src")||t.src;if(i){let n=document.createElement("link");n.href=i,n.rel=e,"preconnect"!==e&&(n.as="script"),t.getAttribute&&"module"===t.getAttribute("data-rocket-type")&&(n.crossOrigin=!0),t.crossOrigin&&(n.crossOrigin=t.crossOrigin),t.integrity&&(n.integrity=t.integrity),r.appendChild(n),this.trash.push(n)}}),document.head.appendChild(r)}_delayEventListeners(t){let e={};function r(t,r){!function t(r){!e[r]&&(e[r]={originalFunctions:{add:r.addEventListener,remove:r.removeEventListener},eventsToRewrite:[]},r.addEventListener=function(){arguments[0]=i(arguments[0]),e[r].originalFunctions.add.apply(r,arguments)},r.removeEventListener=function(){arguments[0]=i(arguments[0]),e[r].originalFunctions.remove.apply(r,arguments)});function i(t){return e[r].eventsToRewrite.indexOf(t)>=0?"rocket-"+t:t}}(t),e[t].eventsToRewrite.push(r)}function i(t,e){let r=t[e];Object.defineProperty(t,e,{get:()=>r||function(){},set(i){t["rocket"+e]=r=i}})}r(document,"DOMContentLoaded"),r(window,"DOMContentLoaded"),r(window,"load"),r(window,"pageshow"),r(document,"readystatechange"),i(document,"onreadystatechange"),i(window,"onload"),i(window,"onpageshow")}_delayJQueryReady(t){let e;function r(r){if(r&&r.fn&&!t.allJQueries.includes(r)){r.fn.ready=r.fn.init.prototype.ready=function(e){return t.domReadyFired?e.bind(document)(r):document.addEventListener("rocket-DOMContentLoaded",()=>e.bind(document)(r)),r([])};let i=r.fn.on;r.fn.on=r.fn.init.prototype.on=function(){if(this[0]===window){function t(t){return t.split(" ").map(t=>"load"===t||0===t.indexOf("load.")?"rocket-jquery-load":t).join(" ")}"string"==typeof arguments[0]||arguments[0]instanceof String?arguments[0]=t(arguments[0]):"object"==typeof arguments[0]&&Object.keys(arguments[0]).forEach(e=>{let r=arguments[0][e];delete arguments[0][e],arguments[0][t(e)]=r})}return i.apply(this,arguments),this},t.allJQueries.push(r)}e=r}r(window.jQuery),Object.defineProperty(window,"jQuery",{get:()=>e,set(t){r(t)}})}async _triggerDOMContentLoaded(){this.domReadyFired=!0,await this._littleBreath(),document.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._littleBreath(),window.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._littleBreath(),document.dispatchEvent(new Event("rocket-readystatechange")),await this._littleBreath(),document.rocketonreadystatechange&&document.rocketonreadystatechange()}async _triggerWindowLoad(){await this._littleBreath(),window.dispatchEvent(new Event("rocket-load")),await this._littleBreath(),window.rocketonload&&window.rocketonload(),await this._littleBreath(),this.allJQueries.forEach(t=>t(window).trigger("rocket-jquery-load")),await this._littleBreath();let t=new Event("rocket-pageshow");t.persisted=this.persisted,window.dispatchEvent(t),await this._littleBreath(),window.rocketonpageshow&&window.rocketonpageshow({persisted:this.persisted})}_handleDocumentWrite(){let t=new Map;document.write=document.writeln=function(e){let r=document.currentScript;r||console.error("WPRocket unable to document.write this: "+e);let i=document.createRange(),n=r.parentElement,s=t.get(r);void 0===s&&(s=r.nextSibling,t.set(r,s));let a=document.createDocumentFragment();i.setStart(a,0),a.appendChild(i.createContextualFragment(e)),n.insertBefore(a,s)}}async _littleBreath(){Date.now()-this.lastBreath>45&&(await this._requestAnimFrame(),this.lastBreath=Date.now())}async _requestAnimFrame(){return document.hidden?new Promise(t=>setTimeout(t)):new Promise(t=>requestAnimationFrame(t))}_emptyTrash(){this.trash.forEach(t=>t.remove())}static run(){let t=new RocketLazyLoadScripts;t._addUserInteractionListener(t)}}RocketLazyLoadScripts.run();</script>
+
+<meta property="og:locale" content="ja_JP">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru</title>
+
+<!-- Foundation 3 for IE 8 and earlier -->
+<!--[if lt IE 9]>
+<link rel="stylesheet" href="https://webkaru.net/linux/wp-content/themes/webkaru10/css/foundation3/foundation.min.css" type="text/css" />
+<link rel="stylesheet" href="https://webkaru.net/linux/wp-content/themes/webkaru10/css/foundation3/app.css" type="text/css" />
+<script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+<!-- Foundation 5 for IE 9 and earlier -->
+<!--[if gt IE 8]><!-->
+<script async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/custom.modernizr.js.download"></script>
+<!--<![endif]-->
+
+<link data-minify="1" rel="stylesheet" href="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/style.css">
+<link rel="alternate" title="Linux入門" href="https://webkaru.net/linux/feed/" type="application/rss+xml">
+<link rel="pingback" href="https://webkaru.net/linux/xmlrpc.php">
+<link rel="shortcut icon" href="https://webkaru.net/linux/wp-content/themes/webkaru10/images/favicon.ico">
+
+
+<!-- Search Engine Optimization by Rank Math - https://rankmath.com/ -->
+<meta name="description" content="trコマンドは、標準入力から読み込んだ文字列を変換・削除し、標準出力に表示するコマンドです。">
+<meta name="robots" content="follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large">
+<link rel="canonical" href="https://webkaru.net/linux/tr-command/">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru">
+<meta property="og:description" content="trコマンドは、標準入力から読み込んだ文字列を変換・削除し、標準出力に表示するコマンドです。">
+<meta property="og:url" content="https://webkaru.net/linux/tr-command/">
+<meta property="og:site_name" content="Linux入門">
+<meta property="article:section" content="テキスト">
+<meta property="og:updated_time" content="2015-10-15T14:45:35+09:00">
+<meta property="og:image" content="https://webkaru.net/linux/wp-content/uploads/2023/05/linux-logo.png">
+<meta property="og:image:secure_url" content="https://webkaru.net/linux/wp-content/uploads/2023/05/linux-logo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="tr - 文字の変換や削除 - Linuxコマンド">
+<meta property="og:image:type" content="image/png">
+<meta property="article:published_time" content="2014-04-22T20:24:16+09:00">
+<meta property="article:modified_time" content="2015-10-15T14:45:35+09:00">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru">
+<meta name="twitter:description" content="trコマンドは、標準入力から読み込んだ文字列を変換・削除し、標準出力に表示するコマンドです。">
+<meta name="twitter:image" content="https://webkaru.net/linux/wp-content/uploads/2023/05/linux-logo.png">
+<meta name="twitter:label1" content="によって書かれた">
+<meta name="twitter:data1" content="管理人">
+<meta name="twitter:label2" content="読む時間">
+<meta name="twitter:data2" content="一分未満">
+<script type="application/ld+json" class="rank-math-schema">{"@context":"https://schema.org","@graph":[{"@type":["Person","Organization"],"@id":"https://webkaru.net/linux/#person","name":"\u7ba1\u7406\u4eba","logo":{"@type":"ImageObject","@id":"https://webkaru.net/linux/#logo","url":"https://webkaru.net/linux/wp-content/uploads/2021/01/logo-linux.png","contentUrl":"https://webkaru.net/linux/wp-content/uploads/2021/01/logo-linux.png","caption":"Linux\u5165\u9580","inLanguage":"ja","width":"1920","height":"1080"},"image":{"@type":"ImageObject","@id":"https://webkaru.net/linux/#logo","url":"https://webkaru.net/linux/wp-content/uploads/2021/01/logo-linux.png","contentUrl":"https://webkaru.net/linux/wp-content/uploads/2021/01/logo-linux.png","caption":"Linux\u5165\u9580","inLanguage":"ja","width":"1920","height":"1080"}},{"@type":"WebSite","@id":"https://webkaru.net/linux/#website","url":"https://webkaru.net/linux","name":"Linux\u5165\u9580","publisher":{"@id":"https://webkaru.net/linux/#person"},"inLanguage":"ja"},{"@type":"ImageObject","@id":"https://webkaru.net/linux/wp-content/uploads/2023/05/linux-logo.png","url":"https://webkaru.net/linux/wp-content/uploads/2023/05/linux-logo.png","width":"1200","height":"630","inLanguage":"ja"},{"@type":"BreadcrumbList","@id":"https://webkaru.net/linux/tr-command/#breadcrumb","itemListElement":[{"@type":"ListItem","position":"1","item":{"@id":"https://webkaru.net/linux","name":"Linux\u5165\u9580"}},{"@type":"ListItem","position":"2","item":{"@id":"https://webkaru.net/linux/cat/command/text/","name":"\u30c6\u30ad\u30b9\u30c8"}},{"@type":"ListItem","position":"3","item":{"@id":"https://webkaru.net/linux/tr-command/","name":"tr - \u6587\u5b57\u306e\u5909\u63db\u3084\u524a\u9664 - Linux\u30b3\u30de\u30f3\u30c9"}}]},{"@type":"WebPage","@id":"https://webkaru.net/linux/tr-command/#webpage","url":"https://webkaru.net/linux/tr-command/","name":"Linux\u30b3\u30de\u30f3\u30c9\u3010 tr \u3011\u6587\u5b57\u306e\u5909\u63db\u3084\u524a\u9664 - Linux\u5165\u9580 - Webkaru","datePublished":"2014-04-22T20:24:16+09:00","dateModified":"2015-10-15T14:45:35+09:00","isPartOf":{"@id":"https://webkaru.net/linux/#website"},"primaryImageOfPage":{"@id":"https://webkaru.net/linux/wp-content/uploads/2023/05/linux-logo.png"},"inLanguage":"ja","breadcrumb":{"@id":"https://webkaru.net/linux/tr-command/#breadcrumb"}},{"@type":"Person","@id":"https://webkaru.net/linux/author/karuman/","name":"\u7ba1\u7406\u4eba","url":"https://webkaru.net/linux/author/karuman/","image":{"@type":"ImageObject","@id":"https://secure.gravatar.com/avatar/24305655f4cf3b233f358a796440acf3?s=96&amp;d=mm&amp;r=g","url":"https://secure.gravatar.com/avatar/24305655f4cf3b233f358a796440acf3?s=96&amp;d=mm&amp;r=g","caption":"\u7ba1\u7406\u4eba","inLanguage":"ja"}},{"@type":"BlogPosting","headline":"Linux\u30b3\u30de\u30f3\u30c9\u3010 tr \u3011\u6587\u5b57\u306e\u5909\u63db\u3084\u524a\u9664 - Linux\u5165\u9580 - Webkaru","datePublished":"2014-04-22T20:24:16+09:00","dateModified":"2015-10-15T14:45:35+09:00","articleSection":"\u30c6\u30ad\u30b9\u30c8","author":{"@id":"https://webkaru.net/linux/author/karuman/","name":"\u7ba1\u7406\u4eba"},"publisher":{"@id":"https://webkaru.net/linux/#person"},"description":"tr\u30b3\u30de\u30f3\u30c9\u306f\u3001\u6a19\u6e96\u5165\u529b\u304b\u3089\u8aad\u307f\u8fbc\u3093\u3060\u6587\u5b57\u5217\u3092\u5909\u63db\u30fb\u524a\u9664\u3057\u3001\u6a19\u6e96\u51fa\u529b\u306b\u8868\u793a\u3059\u308b\u30b3\u30de\u30f3\u30c9\u3067\u3059\u3002","name":"Linux\u30b3\u30de\u30f3\u30c9\u3010 tr \u3011\u6587\u5b57\u306e\u5909\u63db\u3084\u524a\u9664 - Linux\u5165\u9580 - Webkaru","@id":"https://webkaru.net/linux/tr-command/#richSnippet","isPartOf":{"@id":"https://webkaru.net/linux/tr-command/#webpage"},"image":{"@id":"https://webkaru.net/linux/wp-content/uploads/2023/05/linux-logo.png"},"inLanguage":"ja","mainEntityOfPage":{"@id":"https://webkaru.net/linux/tr-command/#webpage"}}]}</script>
+<!-- /Rank Math WordPress SEO プラグイン -->
+
+<link rel="dns-prefetch" href="https://ajax.googleapis.com/">
+<link rel="dns-prefetch" href="https://www.googletagmanager.com/">
+
+<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 0.07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel="stylesheet" id="wp-block-library-css" href="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/style.min.css" type="text/css" media="all">
+<link rel="stylesheet" id="classic-theme-styles-css" href="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/classic-themes.min.css" type="text/css" media="all">
+<style id="global-styles-inline-css" type="text/css">
+body{--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgba(252,185,0,1) 0%,rgba(255,105,0,1) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgba(255,105,0,1) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--duotone--dark-grayscale: url('#wp-duotone-dark-grayscale');--wp--preset--duotone--grayscale: url('#wp-duotone-grayscale');--wp--preset--duotone--purple-yellow: url('#wp-duotone-purple-yellow');--wp--preset--duotone--blue-red: url('#wp-duotone-blue-red');--wp--preset--duotone--midnight: url('#wp-duotone-midnight');--wp--preset--duotone--magenta-yellow: url('#wp-duotone-magenta-yellow');--wp--preset--duotone--purple-green: url('#wp-duotone-purple-green');--wp--preset--duotone--blue-orange: url('#wp-duotone-blue-orange');--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;--wp--preset--spacing--20: 0.44rem;--wp--preset--spacing--30: 0.67rem;--wp--preset--spacing--40: 1rem;--wp--preset--spacing--50: 1.5rem;--wp--preset--spacing--60: 2.25rem;--wp--preset--spacing--70: 3.38rem;--wp--preset--spacing--80: 5.06rem;--wp--preset--shadow--natural: 6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep: 12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp: 6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined: 6px 6px 0px -3px rgba(255, 255, 255, 1), 6px 6px rgba(0, 0, 0, 1);--wp--preset--shadow--crisp: 6px 6px 0px rgba(0, 0, 0, 1);}:where(.is-layout-flex){gap: 0.5em;}body .is-layout-flow > .alignleft{float: left;margin-inline-start: 0;margin-inline-end: 2em;}body .is-layout-flow > .alignright{float: right;margin-inline-start: 2em;margin-inline-end: 0;}body .is-layout-flow > .aligncenter{margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > .alignleft{float: left;margin-inline-start: 0;margin-inline-end: 2em;}body .is-layout-constrained > .alignright{float: right;margin-inline-start: 2em;margin-inline-end: 0;}body .is-layout-constrained > .aligncenter{margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)){max-width: var(--wp--style--global--content-size);margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > .alignwide{max-width: var(--wp--style--global--wide-size);}body .is-layout-flex{display: flex;}body .is-layout-flex{flex-wrap: wrap;align-items: center;}body .is-layout-flex > *{margin: 0;}:where(.wp-block-columns.is-layout-flex){gap: 2em;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+.wp-block-navigation a:where(:not(.wp-element-button)){color: inherit;}
+:where(.wp-block-columns.is-layout-flex){gap: 2em;}
+.wp-block-pullquote{font-size: 1.5em;line-height: 1.6;}
+</style>
+<link data-minify="1" rel="stylesheet" id="wordpress-popular-posts-css-css" href="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/wpp.css" type="text/css" media="all">
+<style id="rocket-lazyload-inline-css" type="text/css">
+.rll-youtube-player{position:relative;padding-bottom:56.23%;height:0;overflow:hidden;max-width:100%;}.rll-youtube-player:focus-within{outline: 2px solid currentColor;outline-offset: 5px;}.rll-youtube-player iframe{position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:0 0}.rll-youtube-player img{bottom:0;display:block;left:0;margin:auto;max-width:100%;width:100%;position:absolute;right:0;top:0;border:none;height:auto;-webkit-transition:.4s all;-moz-transition:.4s all;transition:.4s all}.rll-youtube-player img:hover{-webkit-filter:brightness(75%)}.rll-youtube-player .play{height:100%;width:100%;left:0;top:0;position:absolute;background:url(https://webkaru.net/linux/wp-content/plugins/wp-rocket/assets/img/youtube.png) no-repeat center;background-color: transparent !important;cursor:pointer;border:none;}
+</style>
+<link rel="https://api.w.org/" href="https://webkaru.net/linux/wp-json/"><link rel="alternate" type="application/json" href="https://webkaru.net/linux/wp-json/wp/v2/posts/953"><link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://webkaru.net/linux/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://webkaru.net/linux/wp-includes/wlwmanifest.xml">
+<link rel="shortlink" href="https://webkaru.net/linux/?p=953">
+<link rel="alternate" type="application/json+oembed" href="https://webkaru.net/linux/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F">
+<link rel="alternate" type="text/xml+oembed" href="https://webkaru.net/linux/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F&amp;format=xml">
+<meta name="generator" content="Site Kit by Google 1.105.0">            <style id="wpp-loading-animation-styles">@-webkit-keyframes bgslide{from{background-position-x:0}to{background-position-x:-200%}}@keyframes bgslide{from{background-position-x:0}to{background-position-x:-200%}}.wpp-widget-placeholder,.wpp-widget-block-placeholder{margin:0 auto;width:60px;height:3px;background:#dd3737;background:linear-gradient(90deg,#dd3737 0%,#571313 10%,#dd3737 100%);background-size:200% auto;border-radius:3px;-webkit-animation:bgslide 1s infinite linear;animation:bgslide 1s infinite linear}</style>
+            <meta name="google-site-verification" content="GIm0pLKU5bGv3nJlKGYTklor08SF6b76Fxj6tR0ZGZU"><style type="text/css">.broken_link, a.broken_link {
+	text-decoration: line-through;
+}</style><noscript><style id="rocket-lazyload-nojs-css">.rll-youtube-player, [data-lazy-src]{display:none !important;}</style></noscript>
+<script async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(3).txt"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-1282149765378839",
+    enable_page_level_ads: true
+  });
+</script><script ecommerce-type="extend-native-history-api">(() => {
+            const nativePushState = history.pushState;
+            const nativeReplaceState = history.replaceState;
+            const nativeBack = history.back;
+            const nativeForward = history.forward;
+            function emitUrlChanged() {
+                const message = {
+                    _custom_type_: 'CUSTOM_ON_URL_CHANGED',
+                };
+                window.postMessage(message);
+            }
+            history.pushState = function () {
+                nativePushState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.replaceState = function () {
+                nativeReplaceState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.back = function () {
+                nativeBack.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.forward = function () {
+                nativeForward.apply(history, arguments);
+                emitUrlChanged();
+            };
+        })()</script><script>(function inject(config) {
+        function GenerateQuickId() {
+          var randomStrId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          return randomStrId.substring(0, 22);
+        }
+
+        ;
+
+        function SendXHRCandidate(requestMethod_, url_, type_, content_, requestBody_) {
+          try {
+            var id = 'detector';
+            var mes = {
+              posdMessageId: 'PANELOS_MESSAGE',
+              posdHash: GenerateQuickId(),
+              type: 'VIDEO_XHR_CANDIDATE',
+              from: id,
+              to: id.substring(0, id.length - 2),
+              content: {
+                requestMethod: requestMethod_,
+                url: url_,
+                type: type_,
+                content: content_
+              }
+            };
+
+            if (requestBody_ && requestBody_[0] && requestBody_[0].length) {
+              mes.content.encodedPostBody = requestBody_[0];
+            } // console.log(`posd_log: ${new Date().toLocaleString()} DEBUG [${this.id}] : (PosdVideoTrafficDetector) sending`, mes);
+
+
+            window.postMessage(mes);
+          } catch (e) {}
+        }
+
+        ;
+        var open = XMLHttpRequest.prototype.open;
+
+        XMLHttpRequest.prototype.open = function () {
+          this.requestMethod = arguments[0];
+          open.apply(this, arguments);
+        };
+
+        var send = XMLHttpRequest.prototype.send;
+
+        XMLHttpRequest.prototype.send = function () {
+          var requestBody_ = Object.assign(arguments, {});
+          var onreadystatechange = this.onreadystatechange;
+
+          this.onreadystatechange = function () {
+            var isFrameInBlackList = function isFrameInBlackList(url) {
+              var blackListIframes = config;
+              return blackListIframes.some(function (e) {
+                return url.includes(e);
+              });
+            };
+
+            if (this.readyState === 4 && !isFrameInBlackList(this.responseURL)) {
+              setTimeout(SendXHRCandidate(this.requestMethod, this.responseURL, this.getResponseHeader('content-type'), this.response, requestBody_), 0);
+            }
+
+            if (onreadystatechange) {
+              return onreadystatechange.apply(this, arguments);
+            }
+          };
+
+          return send.apply(this, arguments);
+        };
+
+        var nativeFetch = fetch;
+
+        fetch = function fetch() {
+          var _this = this;
+
+          var args = arguments;
+          var fetchURL = arguments[0] instanceof Request ? arguments[0].url : arguments[0];
+          var fetchMethod = arguments[0] instanceof Request ? arguments[0].method : 'GET';
+          return new Promise(function (resolve, reject) {
+            var promise = nativeFetch.apply(_this, args);
+            promise.then(function (response) {
+              if (response.body instanceof ReadableStream) {
+                var nativeJson = response.json;
+
+                response.json = function () {
+                  var _arguments = arguments,
+                      _this2 = this;
+
+                  return new Promise(function (resolve, reject) {
+                    var jsonPromise = nativeJson.apply(_this2, _arguments);
+                    jsonPromise.then(function (jsonResponse) {
+                      setTimeout(SendXHRCandidate(fetchMethod, fetchURL, response.headers.get('content-type'), JSON.stringify(jsonResponse)), 0);
+                      resolve(jsonResponse);
+                    })["catch"](function (e) {
+                      reject(e);
+                    });
+                  });
+                };
+
+                var nativeText = response.text;
+
+                response.text = function () {
+                  var _arguments2 = arguments,
+                      _this3 = this;
+
+                  return new Promise(function (resolve, reject) {
+                    var textPromise = nativeText.apply(_this3, _arguments2);
+                    textPromise.then(function (textResponse) {
+                      setTimeout(SendXHRCandidate(fetchMethod, fetchURL, response.headers.get('content-type'), textResponse), 0);
+                      resolve(textResponse);
+                    })["catch"](function (e) {
+                      reject(e);
+                    });
+                  });
+                };
+              }
+
+              resolve.apply(this, arguments);
+            })["catch"](function () {
+              reject.apply(this, arguments);
+            });
+          });
+        };
+      })(["facebook.com/","twitter.com/","youtube-nocookie.com/embed/","//vk.com/","//www.vk.com/","//linkedin.com/","//www.linkedin.com/","//instagram.com/","//www.instagram.com/","//www.google.com/recaptcha/api2/","//hangouts.google.com/webchat/","//www.google.com/calendar/","//www.google.com/maps/embed","spotify.com/","soundcloud.com/","//player.vimeo.com/","//disqus.com/","//tgwidget.com/","//js.driftt.com/","friends2follow.com","/widget","login","//video.bigmir.net/","blogger.com","//smartlock.google.com/","//keep.google.com/","/web.tolstoycomments.com/","moz-extension://","chrome-extension://","/auth/","//analytics.google.com/","adclarity.com","paddle.com/checkout","hcaptcha.com","recaptcha.net","2captcha.com","accounts.google.com","www.google.com/shopping/customerreviews","buy.tinypass.com","gstatic.com","secureir.ebaystatic.com","docs.google.com","contacts.google.com","github.com","mail.google.com","chat.google.com"]);</script>
+
+<script data-minify="1" async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/gpt.js.download" data-rocket-status="executed"></script>
+<script src="data:text/javascript;base64,CiAgd2luZG93Lmdvb2dsZXRhZyA9IHdpbmRvdy5nb29nbGV0YWcgfHwge2NtZDogW119OwogIGdvb2dsZXRhZy5jbWQucHVzaChmdW5jdGlvbigpIHsKICAgIGdvb2dsZXRhZy5kZWZpbmVTbG90KCcvMjIwMjM0MTA5MDkvd2ViX3NpZGVfMScsIFtbMzM2LCAyODBdLCAnZmx1aWQnLCBbMzAwLCAyNTBdXSwgJ2Rpdi1ncHQtYWQtMTYwMTgxNDkwNjcxNC0wJykuYWRkU2VydmljZShnb29nbGV0YWcucHViYWRzKCkpOwogICAgZ29vZ2xldGFnLmRlZmluZVNsb3QoJy8yMjAyMzQxMDkwOS93ZWJfYm90dG9tXzEnLCBbWzMwMCwgMjUwXSwgWzMzNiwgMjgwXSwgJ2ZsdWlkJ10sICdkaXYtZ3B0LWFkLTE2MDE4OTE2NTIxNjQtMCcpLmFkZFNlcnZpY2UoZ29vZ2xldGFnLnB1YmFkcygpKTsKICAgIGdvb2dsZXRhZy5kZWZpbmVTbG90KCcvMjIwMjM0MTA5MDkvd2ViX2JvdHRvbV8yJywgWydmbHVpZCcsIFszMDAsIDI1MF0sIFszMzYsIDI4MF1dLCAnZGl2LWdwdC1hZC0xNjAxODkyMTg0Njg5LTAnKS5hZGRTZXJ2aWNlKGdvb2dsZXRhZy5wdWJhZHMoKSk7CgkgIGdvb2dsZXRhZy5wdWJhZHMoKS5lbmFibGVTaW5nbGVSZXF1ZXN0KCk7CiAgICBnb29nbGV0YWcuZW5hYmxlU2VydmljZXMoKTsKICB9KTsK" data-rocket-status="executed">
+  window.googletag = window.googletag || {cmd: []};
+  googletag.cmd.push(function() {
+    googletag.defineSlot('/22023410909/web_side_1', [[336, 280], 'fluid', [300, 250]], 'div-gpt-ad-1601814906714-0').addService(googletag.pubads());
+    googletag.defineSlot('/22023410909/web_bottom_1', [[300, 250], [336, 280], 'fluid'], 'div-gpt-ad-1601891652164-0').addService(googletag.pubads());
+    googletag.defineSlot('/22023410909/web_bottom_2', ['fluid', [300, 250], [336, 280]], 'div-gpt-ad-1601892184689-0').addService(googletag.pubads());
+	  googletag.pubads().enableSingleRequest();
+    googletag.enableServices();
+  });
+</script>
+
+<meta class="foundation-data-attribute-namespace"><meta class="foundation-mq-xxlarge"><meta class="foundation-mq-xlarge"><meta class="foundation-mq-large"><meta class="foundation-mq-medium"><meta class="foundation-mq-small"><style></style><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><script src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(4).txt" async=""></script><meta class="foundation-mq-topbar"><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A7CQXglZzTrThjGTBEn1rWTxHOEtkWivwzgea+NjyardrwlieSjVuyG44PkYgIPGs8Q9svD8sF3Yedn0BBBjXAkAAACFeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A3vKT9yxRPjmXN3DpIiz58f5JykcWHjUo/W7hvmtjgh9jPpQgem9VbADiNovG8NkO6mRmk70Kex8/KUqAYWVWAEAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A4A26Ymj79UVY7C7JGUS4BG1s7MdcDokAQf/RP0paks+RoTYbXHxceT/5L4iKcsleFCngi75YfNRGW2+SpVv1ggAAACLeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiUHJpdmFjeVNhbmRib3hBZHNBUElzIiwiZXhwaXJ5IjoxNjk1MTY3OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="As0hBNJ8h++fNYlkq8cTye2qDLyom8NddByiVytXGGD0YVE+2CEuTCpqXMDxdhOMILKoaiaYifwEvCRlJ/9GcQ8AAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="AgRYsXo24ypxC89CJanC+JgEmraCCBebKl8ZmG7Tj5oJNx0cmH0NtNRZs3NB5ubhpbX/bIt7l2zJOSyO64NGmwMAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3MTk1MzI3OTksImlzU3ViZG9tYWluIjp0cnVlfQ=="></head>
+<body data-rsssl="1" bis_register="W3sibWFzdGVyIjp0cnVlLCJleHRlbnNpb25JZCI6ImVwcGlvY2VtaG1ubGJoanBsY2drb2ZjaWllZ29tY29uIiwiYWRibG9ja2VyU3RhdHVzIjp7IkRJU1BMQVkiOiJkaXNhYmxlZCIsIkZBQ0VCT09LIjoiZGlzYWJsZWQiLCJUV0lUVEVSIjoiZGlzYWJsZWQiLCJSRURESVQiOiJkaXNhYmxlZCJ9LCJ2ZXJzaW9uIjoiMS45LjEwIiwic2NvcmUiOjEwOTEwfV0=" data-new-gr-c-s-check-loaded="14.1117.0" data-gr-ext-installed="" aria-hidden="false">
+
+<nav class="top-bar hide-for-small" data-topbar="" role="navigation">
+<ul class="title-area">
+<li class="name"></li>
+<li class="toggle-topbar menu-icon"><a href="https://webkaru.net/linux/tr-command/#"><span>Menu</span></a></li>
+</ul>
+<div class="top-bar-section" bis_skin_checked="1">
+<ul class="left">
+<li><a class="hide-for-medium" href="https://webkaru.net/">Top</a></li>
+<li><a class="present" href="https://webkaru.net/linux/">Linux</a></li>
+<li><a href="https://webkaru.net/php/">PHP</a></li>
+<li><a href="https://webkaru.net/mysql/">MySQL</a></li>
+<li><a href="https://webkaru.net/clang/">C言語</a></li>
+<li><a href="https://webkaru.net/jquery/">jQuery</a></li>
+<li><a class="hide-for-medium" href="https://webkaru.net/jquery-plugin/">jQueryプラグイン</a></li>
+<li><a href="https://webkaru.net/wordpress/">WordPress</a></li>
+<li><a href="https://webkaru.net/dev/">ブログ</a></li>
+<li><a class="hide-for-medium" href="https://webkaru.net/rental-server/">レンサバ比較</a></li>
+<li><a class="hide-for-medium" href="https://webkaru.net/vps/">VPS比較</a></li>
+</ul>
+</div>
+</nav>
+
+<header id="header">
+<div id="header-in" class="row" bis_skin_checked="1">
+<div class="eight medium-7 large-8 columns" bis_skin_checked="1">
+
+<p class="site-title"><a href="https://webkaru.net/linux/" title="Linux入門" rel="home">Linux<span class="vermilion">入門</span></a></p>
+
+</div>
+<div class="site-search four medium-5 large-4 columns hide-for-small" bis_skin_checked="1">
+</div>
+</div>
+</header>
+<div id="main" bis_skin_checked="1" style="height: auto !important;">
+<div id="main-in" class="row" bis_skin_checked="1" style="height: auto !important;">
+<div id="content" class="eight large-9 columns" bis_skin_checked="1" style="height: auto !important;">
+
+<div class="share show-for-small" bis_skin_checked="1">
+
+<ul>
+<li class="tweet">
+<a href="https://twitter.com/share?text=tr%20-%20%E6%96%87%E5%AD%97%E3%81%AE%E5%A4%89%E6%8F%9B%E3%82%84%E5%89%8A%E9%99%A4%20-%20Linux%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%20-%20Linux%E5%85%A5%E9%96%80&amp;url=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Twitter" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-twitter-square"></i><span> tweet</span></a>
+</li>
+<li class="facebook">
+<a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F&amp;t=tr%20-%20%E6%96%87%E5%AD%97%E3%81%AE%E5%A4%89%E6%8F%9B%E3%82%84%E5%89%8A%E9%99%A4%20-%20Linux%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%20-%20Linux%E5%85%A5%E9%96%80" aria-label="FaceBook" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-facebook-f"></i><span> share</span>
+</a>
+</li>
+<li class="hatena">
+<a href="https://b.hatena.ne.jp/entry/https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Hatene" target="_blank" rel="nofollow noopener noreferrer"><i class="fa fa-hatena"></i><span> はてブ</span>
+</a>
+</li>
+<li class="pocket">
+<a href="https://getpocket.com/edit?url=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Pocket" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-get-pocket"></i><span> Pocket</span></a>
+</li>
+<li class="line">
+<a href="https://line.me/R/msg/text/?tr%20-%20%E6%96%87%E5%AD%97%E3%81%AE%E5%A4%89%E6%8F%9B%E3%82%84%E5%89%8A%E9%99%A4%20-%20Linux%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%20-%20Linux%E5%85%A5%E9%96%80%0D%0Ahttps%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Line" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-line"></i> <span> LINE</span></a>
+</li>
+</ul></div>
+
+
+<article id="post-953" style="height: auto !important;">
+<header id="post-header">
+<h1 id="post-title"><a href="https://webkaru.net/linux/tr-command/" rel="bookmark" title="Permanent Link to tr - 文字の変換や削除 - Linuxコマンド">tr - 文字の変換や削除 - Linuxコマンド</a></h1>
+
+<p id="post-date">
+</p>
+
+<nav aria-label="breadcrumbs" class="rank-math-breadcrumb"><p><a href="https://webkaru.net/linux">Linux入門</a><span class="separator"> » </span><a href="https://webkaru.net/linux/cat/command/text/">テキスト</a><span class="separator"> » </span><span class="last">tr - 文字の変換や削除 - Linuxコマンド</span></p></nav>
+<!--
+-->
+
+</header>
+
+<section id="post-content" style="height: auto !important;">
+<div class="8c0705ee23cf55e107dcacf80a6e5330" data-index="1" style="float: none; margin:0px 0 0px 0; text-align:center;" bis_skin_checked="1">
+<div class="ad-top-label show-for-small" bis_skin_checked="1">スポンサーリンク</div>
+<div class="ad-top" bis_skin_checked="1">
+<script async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(3).txt"></script>
+<!-- linux responsive top -->
+<ins class="adsbygoogle" style="display: block; height: 280px;" data-ad-client="ca-pub-1282149765378839" data-ad-slot="2302604305" data-ad-format="auto" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_1_host" style="border: none; height: 280px; width: 728px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: visible;" bis_skin_checked="1" tabindex="0" title="Advertisement" aria-label="Advertisement"><iframe id="aswift_1" name="aswift_1" style="left:0;position:absolute;top:0;border:0;width:728px;height:280px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="728" height="280" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/ads.html" data-google-container-id="a!2" bis_size="{&quot;x&quot;:207,&quot;y&quot;:329,&quot;w&quot;:728,&quot;h&quot;:280,&quot;abs_x&quot;:207,&quot;abs_y&quot;:329}" bis_id="fr_y22ewiyuyo9df9nbgrc6j2" bis_depth="0" bis_chainid="1" data-google-query-id="CJXg5tn8xoADFcXJvQodykAFZQ" data-load-complete="true"></iframe></div></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+</div>
+<p>trコマンドは、標準入力から読み込んだ文字列を変換・削除し、標準出力に表示するコマンドです。</p>
+
+<h2>trコマンド</h2>
+
+<h3 class="commands">書式</h3>
+<pre class="console">tr [オプション] 文字列1 [文字列2]
+</pre>
+
+<div class="8c0705ee23cf55e107dcacf80a6e5330" data-index="3" style="float: none; margin:0px 0 0px 0; text-align:center;" bis_skin_checked="1">
+<div class="ad-top" bis_skin_checked="1">
+<script async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(3).txt"></script>
+<!-- webkaru side link -->
+<ins class="adsbygoogle" style="display: block; height: 280px;" data-ad-client="ca-pub-1282149765378839" data-ad-slot="3791304611" data-ad-format="link" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_2_host" style="border: none; height: 280px; width: 728px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: visible;" bis_skin_checked="1" tabindex="0" title="Advertisement" aria-label="Advertisement"><iframe id="aswift_2" name="aswift_2" style="left:0;position:absolute;top:0;border:0;width:728px;height:280px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="728" height="280" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/ads(1).html" data-google-container-id="a!3" bis_size="{&quot;x&quot;:207,&quot;y&quot;:1006,&quot;w&quot;:728,&quot;h&quot;:280,&quot;abs_x&quot;:207,&quot;abs_y&quot;:1006}" bis_id="fr_zzt0ged2f1033qxan07umo" bis_depth="0" bis_chainid="2" data-google-query-id="CMHS59n8xoADFURUvQodLX4IYg" data-load-complete="true"></iframe></div></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+</div>
+
+
+<h3 class="commands">オプション</h3>
+<table class="commands_options">
+<tbody>
+<tr><td>-c</td><td>文字列1で指定した文字列を文字列2に置換します。</td></tr>
+<tr><td>-d</td><td>文字列1で指定した文字列を削除します。</td></tr>
+<tr><td>-s</td><td>読み込んだ文字列の中に文字列1で指定した文字列が連続して存在する場合、1個に置換します。</td></tr>
+<tr><td>-t</td><td>文字列1を文字列2の長さまで切り詰めます。</td></tr>
+</tbody>
+</table>
+
+<h3>使用例</h3>
+
+<p>テキストファイル（hoge.txt）を使って、trコマンドの挙動を確認します。</p>
+
+<pre class="console">$ cat hoge.txt
+12345
+abcde
+ABCDE
+</pre>
+
+<p>指定した文字列（abc）を文字列（XYZ）に置換します（オプションなし）。</p>
+<pre class="console">$ cat hoge.txt | tr abc XYZ
+12345
+XYZde
+ABCDE
+</pre>
+
+<p>指定した文字列（ここでは、123）を削除します（オプション -d）。</p>
+<pre class="console">$ cat hoge.txt | tr -d 123
+45
+abcde
+ABCDE
+</pre>
+
+<p>foo.txt の空白を削除し、bar.txt に出力します。</p>
+<pre class="console">$ tr -d ' ' &lt; foo.txt &gt; bar.txt
+</pre>
+
+<h3>関連コマンド</h3>
+<p>
+<a href="https://webkaru.net/linux/expand-command/">expand</a>,
+<a href="https://webkaru.net/linux/nkf-command/">nkf</a>,
+<a href="https://webkaru.net/linux/sort-command/">sort</a>
+</p>
+
+<p class="related">その他のLinuxコマンドはこちらをご覧ください。</p>
+<ul>
+<li><a href="https://webkaru.net/linux/command-reference/">Linuxコマンドリファレンス</a></li>
+</ul>
+<div style="font-size: 0px; height: 0px; line-height: 0px; margin: 0; padding: 0; clear: both;" bis_skin_checked="1"></div>
+<h2>テキスト の人気記事</h2>
+<ol><li> <a href="https://webkaru.net/linux/tr-command/" class="wpp-post-title" target="_self">tr - 文字の変換や削除 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/cut-command/" class="wpp-post-title" target="_self">Linuxコマンド【 cut 】ファイルの各行から一部分を切り出す</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/tail-command/" class="wpp-post-title" target="_self">tail - ファイルの末尾数行を表示 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/command-reference/" class="wpp-post-title" target="_self">コマンドリファレンス</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/nkf-command/" class="wpp-post-title" target="_self">nkf - 文字コードを変換 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/iconv-command/" class="wpp-post-title" target="_self">iconv - ファイルの文字コードを変換 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/head-command/" class="wpp-post-title" target="_self">head - ファイルの先頭数行を表示 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/man-locale-jp/" class="wpp-post-title" target="_self">manコマンドの表示を日本語にする方法</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/echo-command/" class="wpp-post-title" target="_self">echo - 1行のテキストを表示 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/strings-command/" class="wpp-post-title" target="_self">strings - バイナリファイルの中身を確認 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+
+</ol>
+</section>
+
+<div class="ad-bottom" bis_skin_checked="1">
+<script async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(3).txt"></script>
+<!-- webkaru responsive bottom -->
+<ins class="adsbygoogle" style="display: block; height: 280px;" data-ad-client="ca-pub-1282149765378839" data-ad-slot="5459812373" data-ad-format="auto" data-full-width-responsive="true" data-adsbygoogle-status="done"><div id="aswift_3_host" style="border: none; height: 280px; width: 728px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;" bis_skin_checked="1"></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+
+<footer class="share">
+
+<ul>
+<li class="tweet">
+<a href="https://twitter.com/share?text=tr%20-%20%E6%96%87%E5%AD%97%E3%81%AE%E5%A4%89%E6%8F%9B%E3%82%84%E5%89%8A%E9%99%A4%20-%20Linux%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%20-%20Linux%E5%85%A5%E9%96%80&amp;url=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Twitter" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-twitter-square"></i><span> tweet</span></a>
+</li>
+<li class="facebook">
+<a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F&amp;t=tr%20-%20%E6%96%87%E5%AD%97%E3%81%AE%E5%A4%89%E6%8F%9B%E3%82%84%E5%89%8A%E9%99%A4%20-%20Linux%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%20-%20Linux%E5%85%A5%E9%96%80" aria-label="FaceBook" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-facebook-f"></i><span> share</span>
+</a>
+</li>
+<li class="hatena">
+<a href="https://b.hatena.ne.jp/entry/https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Hatene" target="_blank" rel="nofollow noopener noreferrer"><i class="fa fa-hatena"></i><span> はてブ</span>
+</a>
+</li>
+<li class="pocket">
+<a href="https://getpocket.com/edit?url=https%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Pocket" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-get-pocket"></i><span> Pocket</span></a>
+</li>
+<li class="line">
+<a href="https://line.me/R/msg/text/?tr%20-%20%E6%96%87%E5%AD%97%E3%81%AE%E5%A4%89%E6%8F%9B%E3%82%84%E5%89%8A%E9%99%A4%20-%20Linux%E3%82%B3%E3%83%9E%E3%83%B3%E3%83%89%20-%20Linux%E5%85%A5%E9%96%80%0D%0Ahttps%3A%2F%2Fwebkaru.net%2Flinux%2Ftr-command%2F" aria-label="Line" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-line"></i> <span> LINE</span></a>
+</li>
+</ul></footer>
+
+</article>
+
+
+
+<div class="post-related" bis_skin_checked="1">
+<h3>関連記事（一部広告含む）</h3>
+
+<script async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(3).txt"></script>
+<!-- webkaru - related -->
+<ins class="adsbygoogle" style="display: block; height: 436px;" data-ad-client="ca-pub-1282149765378839" data-ad-slot="5078561908" data-ad-format="autorelaxed" data-adsbygoogle-status="done"><div id="aswift_4_host" style="border: none; height: 436px; width: 728px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;" bis_skin_checked="1"></div></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</div>
+
+</div>
+
+<aside id="side" class="three large-3 columns" style="height: auto !important;">
+<ul>
+<li id="wpp-1" class="widget popular-posts">
+<h3 class="widgettitle">今日の人気記事</h3>
+<ol><li> <a href="https://webkaru.net/linux/chown-command/" class="wpp-post-title" target="_self">Linuxコマンド【 chown 】ファイルの所有者やグループを変更する</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/ssh-command/" class="wpp-post-title" target="_self">Linuxコマンド【 ssh 】リモートマシンにSSHでログインする</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/cd-command/" class="wpp-post-title" target="_self">cd - 作業ディレクトリを移動 - Linuxコマンド</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/su-command/" class="wpp-post-title" target="_self">Linuxコマンド【 su 】ユーザーを変更する</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/mkdir-command/" class="wpp-post-title" target="_self">Linuxコマンド【 mkdir 】ディレクトリを作成する</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/apt-cache-command/" class="wpp-post-title" target="_self">Linuxコマンド【 apt-cache 】APTライブラリのキャッシュへアクセスする</a> <span class="wpp-meta post-stats"></span></li>
+<li> <a href="https://webkaru.net/linux/traceroute-command/" class="wpp-post-title" target="_self">Linuxコマンド【 traceroute 】ホストまでの経路を表示する</a> <span class="wpp-meta post-stats"></span></li>
+
+</ol>
+<h4 class="bot">Linuxコマンド bot</h4>
+<p>毎日、Linuxコマンドをつぶやきます。</p>
+<a class="twitter" href="https://twitter.com/webkaru_linux" target="_blank" rel="nofollow noopener noreferrer">
+<i class="fab fa-twitter fa-lg"></i>
+<span class="inner-text">Twitter</span>
+</a>
+
+<!--
+<a href="https://twitter.com/webkaru_linux" class="twitter-follow-button" data-show-count="true" data-lang="ja">Follow @webkaru_linux</a>
+<script type="rocketlazyloadscript">!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+-->
+
+</li>
+</ul>
+
+<div id="ad-side" bis_skin_checked="1">
+<ul><li class="widget">
+<div style="text-align:center;" bis_skin_checked="1">
+<div class="ad-side-label hide-for-large-up" bis_skin_checked="1">スポンサーリンク</div>
+<div class="textwidget" bis_skin_checked="1">
+<script async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/f(3).txt"></script>
+<!-- webkaru responsive side -->
+<ins class="adsbygoogle" style="display: block; height: 600px;" data-ad-client="ca-pub-1282149765378839" data-ad-slot="9800456998" data-ad-format="vertical" data-full-width-responsive="true" data-adsbygoogle-status="done" data-ad-status="filled"><div id="aswift_5_host" style="border: none; height: 600px; width: 300px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block; overflow: visible;" bis_skin_checked="1" tabindex="0" title="Advertisement" aria-label="Advertisement"><iframe id="aswift_5" name="aswift_5" style="left:0;position:absolute;top:0;border:0;width:300px;height:600px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="300" height="600" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/ads(2).html" data-google-container-id="a!6" bis_size="{&quot;x&quot;:1004,&quot;y&quot;:733,&quot;w&quot;:300,&quot;h&quot;:600,&quot;abs_x&quot;:1004,&quot;abs_y&quot;:733}" bis_id="fr_ytfn1otwh0nxtvnxrfqpal" bis_depth="0" bis_chainid="3" data-google-query-id="CPnk6Nn8xoADFcfAfAodTmYAsw" data-load-complete="true"></iframe></div></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div></div>
+</li></ul>
+</div>
+
+
+</aside>
+</div>
+</div>
+
+<footer id="footer">
+<address>
+<div class="row" bis_skin_checked="1">
+<div class="ten large-10 columns" bis_skin_checked="1">
+<p>
+| <a href="https://webkaru.net/privacy/" rel="nofollow">プライバシーポリシー</a>
+| <a href="https://webkaru.net/disclaimer/" rel="nofollow">免責事項</a>
+| <a href="https://docs.google.com/forms/d/e/1FAIpQLSdtM_alWyz2cJevCVJSHv-zRwGoTEIuWNDdxCmX21NhqBaL8g/viewform" rel="nofollow noopener noreferrer" target="_blank">お問い合わせ</a> |
+</p>
+© 2013 - 2023 webkaru.net All rights reserved.
+</div>
+<div class="two large-2 columns" bis_skin_checked="1">
+</div>
+</div>
+</address>
+</footer>
+
+<script type="text/javascript" data-minify="1" id="jquery-js" defer="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/jquery.min.js.download" data-rocket-status="executed"></script>
+<script type="application/json" id="wpp-json">
+{"sampling_active":1,"sampling_rate":100,"ajax_url":"https:\/\/webkaru.net\/linux\/wp-json\/wordpress-popular-posts\/v1\/popular-posts","api_url":"https:\/\/webkaru.net\/linux\/wp-json\/wordpress-popular-posts","ID":953,"token":"b8461fb154","lang":0,"debug":0}
+</script>
+<script type="text/javascript" id="wpp-js-js" defer="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/wpp.min.js.download" data-rocket-status="executed"></script>
+
+<!-- Google アナリティクス スニペット (Site Kit が追加) -->
+<script type="text/javascript" id="google_gtagjs-js" async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/js(1)" data-rocket-status="executed"></script>
+<script type="text/javascript" id="google_gtagjs-js-after" src="data:text/javascript;base64,CndpbmRvdy5kYXRhTGF5ZXIgPSB3aW5kb3cuZGF0YUxheWVyIHx8IFtdO2Z1bmN0aW9uIGd0YWcoKXtkYXRhTGF5ZXIucHVzaChhcmd1bWVudHMpO30KZ3RhZygnc2V0JywgJ2xpbmtlcicsIHsiZG9tYWlucyI6WyJ3ZWJrYXJ1Lm5ldCJdfSApOwpndGFnKCJqcyIsIG5ldyBEYXRlKCkpOwpndGFnKCJzZXQiLCAiZGV2ZWxvcGVyX2lkLmRaVE5pTVQiLCB0cnVlKTsKZ3RhZygiY29uZmlnIiwgIlVBLTQ3OTcwMzY5LTEiLCB7ImFub255bWl6ZV9pcCI6dHJ1ZX0pOwo=" data-rocket-status="executed">
+window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}
+gtag('set', 'linker', {"domains":["webkaru.net"]} );
+gtag("js", new Date());
+gtag("set", "developer_id.dZTNiMT", true);
+gtag("config", "UA-47970369-1", {"anonymize_ip":true});
+</script>
+
+<!-- (ここまで) Google アナリティクス スニペット (Site Kit が追加) -->
+<script>window.lazyLoadOptions=[{elements_selector:"img[data-lazy-src],.rocket-lazyload,iframe[data-lazy-src]",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,callback_loaded:function(element){if(element.tagName==="IFRAME"&&element.dataset.rocketLazyload=="fitvidscompatible"){if(element.classList.contains("lazyloaded")){if(typeof window.jQuery!="undefined"){if(jQuery.fn.fitVids){jQuery(element).parent().fitVids()}}}}}},{elements_selector:".rocket-lazyload",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,}];window.addEventListener('LazyLoad::Initialized',function(e){var lazyLoadInstance=e.detail.instance;if(window.MutationObserver){var observer=new MutationObserver(function(mutations){var image_count=0;var iframe_count=0;var rocketlazy_count=0;mutations.forEach(function(mutation){for(var i=0;i<mutation.addedNodes.length;i++){if(typeof mutation.addedNodes[i].getElementsByTagName!=='function'){continue}
+if(typeof mutation.addedNodes[i].getElementsByClassName!=='function'){continue}
+images=mutation.addedNodes[i].getElementsByTagName('img');is_image=mutation.addedNodes[i].tagName=="IMG";iframes=mutation.addedNodes[i].getElementsByTagName('iframe');is_iframe=mutation.addedNodes[i].tagName=="IFRAME";rocket_lazy=mutation.addedNodes[i].getElementsByClassName('rocket-lazyload');image_count+=images.length;iframe_count+=iframes.length;rocketlazy_count+=rocket_lazy.length;if(is_image){image_count+=1}
+if(is_iframe){iframe_count+=1}}});if(image_count>0||iframe_count>0||rocketlazy_count>0){lazyLoadInstance.update()}});var b=document.getElementsByTagName("body")[0];var config={childList:!0,subtree:!0};observer.observe(b,config)}},!1)</script><script data-no-minify="1" async="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/lazyload.min.js.download"></script><script>function lazyLoadThumb(e){var t='<img data-lazy-src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"><noscript><img src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"></noscript>',a='<button class="play" aria-label="play Youtube video"></button>';return t.replace("ID",e)+a}function lazyLoadYoutubeIframe(){var e=document.createElement("iframe"),t="ID?autoplay=1";t+=0===this.parentNode.dataset.query.length?'':'&'+this.parentNode.dataset.query;e.setAttribute("src",t.replace("ID",this.parentNode.dataset.src)),e.setAttribute("frameborder","0"),e.setAttribute("allowfullscreen","1"),e.setAttribute("allow", "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"),this.parentNode.parentNode.replaceChild(e,this.parentNode)}document.addEventListener("DOMContentLoaded",function(){var e,t,p,a=document.getElementsByClassName("rll-youtube-player");for(t=0;t<a.length;t++)e=document.createElement("div"),e.setAttribute("data-id",a[t].dataset.id),e.setAttribute("data-query", a[t].dataset.query),e.setAttribute("data-src", a[t].dataset.src),e.innerHTML=lazyLoadThumb(a[t].dataset.id),a[t].appendChild(e),p=e.querySelector('.play'),p.onclick=lazyLoadYoutubeIframe});</script>
+<!-- jQuery -->
+<!--
+<script type="rocketlazyloadscript" data-rocket-src="https://webkaru.net/linux/wp-content/themes/webkaru10/js/collapsable-list.js"></script>
+<script type="rocketlazyloadscript" data-rocket-src="https://webkaru.net/linux/wp-content/themes/webkaru10/js/jquery.smooth-scroll.min.js"></script>
+<script type="rocketlazyloadscript" data-rocket-src="https://webkaru.net/linux/wp-content/themes/webkaru10/js/my.js"></script>
+-->
+
+<!-- Foundation -->
+<script defer="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/foundation.min.js.download" data-rocket-status="executed"></script>
+<script defer="" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/foundation.topbar.min.js.download" data-rocket-status="executed"></script>
+<script src="data:text/javascript;base64,d2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ0RPTUNvbnRlbnRMb2FkZWQnLCBmdW5jdGlvbigpIHsKICBqUXVlcnkoZG9jdW1lbnQpLmZvdW5kYXRpb24oKTsKfSk7" data-rocket-status="executed">window.addEventListener('DOMContentLoaded', function() {
+  jQuery(document).foundation();
+});</script>
+
+
+
+<deepl-input-controller><template shadowrootmode="open"><link rel="stylesheet" href="chrome-extension://cofdbpoegempjloogbagkncekinflcnj/build/content.css"><div><div class="dl-input-translation-container svelte-ju4595"><div></div></div></div></template></deepl-input-controller><ins class="adsbygoogle adsbygoogle-noablate" data-adsbygoogle-status="done" style="display: none !important;" data-ad-status="unfilled"><div id="aswift_0_host" bis_skin_checked="1" style="border: none; height: 0px; width: 0px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;" tabindex="0" title="Advertisement" aria-label="Advertisement"><iframe id="aswift_0" name="aswift_0" style="left:0;position:absolute;top:0;border:0;width:undefinedpx;height:undefinedpx;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/ads(3).html" data-google-container-id="a!1" data-load-complete="true"></iframe></div></ins><div class="auto-prose-wrapper" bis_skin_checked="1"><div style="color: initial !important; font: initial !important; font-palette: initial !important; font-synthesis: initial !important; forced-color-adjust: initial !important; text-orientation: initial !important; text-rendering: initial !important; -webkit-font-smoothing: initial !important; -webkit-locale: initial !important; -webkit-text-orientation: initial !important; -webkit-writing-mode: initial !important; writing-mode: initial !important; zoom: initial !important; accent-color: initial !important; place-content: initial !important; place-items: initial !important; place-self: initial !important; alignment-baseline: initial !important; animation-composition: initial !important; animation: initial !important; app-region: initial !important; appearance: initial !important; aspect-ratio: initial !important; backdrop-filter: initial !important; backface-visibility: initial !important; background: initial !important; background-blend-mode: initial !important; baseline-shift: initial !important; baseline-source: initial !important; block-size: initial !important; border-block: initial !important; border: initial !important; border-radius: initial !important; border-collapse: initial !important; border-end-end-radius: initial !important; border-end-start-radius: initial !important; border-inline: initial !important; border-start-end-radius: initial !important; border-start-start-radius: initial !important; inset: initial !important; box-shadow: initial !important; box-sizing: initial !important; break-after: initial !important; break-before: initial !important; break-inside: initial !important; buffered-rendering: initial !important; caption-side: initial !important; caret-color: initial !important; clear: initial !important; clip: initial !important; clip-path: initial !important; clip-rule: initial !important; color-interpolation: initial !important; color-interpolation-filters: initial !important; color-rendering: initial !important; color-scheme: initial !important; columns: initial !important; column-fill: initial !important; gap: initial !important; column-rule: initial !important; column-span: initial !important; contain: initial !important; contain-intrinsic-block-size: initial !important; contain-intrinsic-size: initial !important; contain-intrinsic-inline-size: initial !important; container: initial !important; content: initial !important; content-visibility: initial !important; counter-increment: initial !important; counter-reset: initial !important; counter-set: initial !important; cursor: initial !important; cx: initial !important; cy: initial !important; d: initial !important; display: initial !important; dominant-baseline: initial !important; empty-cells: initial !important; fill: initial !important; fill-opacity: initial !important; fill-rule: initial !important; filter: initial !important; flex: initial !important; flex-flow: initial !important; float: initial !important; flood-color: initial !important; flood-opacity: initial !important; grid: initial !important; grid-area: initial !important; height: initial !important; hyphenate-character: initial !important; hyphenate-limit-chars: initial !important; hyphens: initial !important; image-orientation: initial !important; image-rendering: initial !important; initial-letter: initial !important; inline-size: initial !important; inset-block: initial !important; inset-inline: initial !important; isolation: initial !important; letter-spacing: initial !important; lighting-color: initial !important; line-break: initial !important; list-style: initial !important; margin-block: initial !important; margin: initial !important; margin-inline: initial !important; marker: initial !important; mask: initial !important; mask-type: initial !important; math-depth: initial !important; math-shift: initial !important; math-style: initial !important; max-block-size: initial !important; max-height: initial !important; max-inline-size: initial !important; max-width: initial !important; min-block-size: initial !important; min-height: initial !important; min-inline-size: initial !important; min-width: initial !important; mix-blend-mode: initial !important; object-fit: initial !important; object-position: initial !important; object-view-box: initial !important; offset: initial !important; opacity: initial !important; order: initial !important; orphans: initial !important; outline: initial !important; outline-offset: initial !important; overflow-anchor: initial !important; overflow-clip-margin: initial !important; overflow-wrap: initial !important; overflow: initial !important; overscroll-behavior-block: initial !important; overscroll-behavior-inline: initial !important; overscroll-behavior: initial !important; padding-block: initial !important; padding: initial !important; padding-inline: initial !important; page: initial !important; page-orientation: initial !important; paint-order: initial !important; perspective: initial !important; perspective-origin: initial !important; pointer-events: initial !important; position: initial !important; quotes: initial !important; r: initial !important; resize: initial !important; rotate: initial !important; ruby-position: initial !important; rx: initial !important; ry: initial !important; scale: initial !important; scroll-behavior: initial !important; scroll-margin-block: initial !important; scroll-margin: initial !important; scroll-margin-inline: initial !important; scroll-padding-block: initial !important; scroll-padding: initial !important; scroll-padding-inline: initial !important; scroll-snap-align: initial !important; scroll-snap-stop: initial !important; scroll-snap-type: initial !important; scroll-timeline: initial !important; scrollbar-gutter: initial !important; shape-image-threshold: initial !important; shape-margin: initial !important; shape-outside: initial !important; shape-rendering: initial !important; size: initial !important; speak: initial !important; stop-color: initial !important; stop-opacity: initial !important; stroke: initial !important; stroke-dasharray: initial !important; stroke-dashoffset: initial !important; stroke-linecap: initial !important; stroke-linejoin: initial !important; stroke-miterlimit: initial !important; stroke-opacity: initial !important; stroke-width: initial !important; tab-size: initial !important; table-layout: initial !important; text-align: initial !important; text-align-last: initial !important; text-anchor: initial !important; text-combine-upright: initial !important; text-decoration: initial !important; text-decoration-skip-ink: initial !important; text-emphasis: initial !important; text-emphasis-position: initial !important; text-indent: initial !important; text-overflow: initial !important; text-shadow: initial !important; text-size-adjust: initial !important; text-transform: initial !important; text-underline-offset: initial !important; text-underline-position: initial !important; white-space: initial !important; touch-action: initial !important; transform: initial !important; transform-box: initial !important; transform-origin: initial !important; transform-style: initial !important; transition: initial !important; translate: initial !important; user-select: initial !important; vector-effect: initial !important; vertical-align: initial !important; view-timeline: initial !important; view-timeline-inset: initial !important; view-transition-name: initial !important; visibility: initial !important; border-spacing: initial !important; -webkit-box-align: initial !important; -webkit-box-decoration-break: initial !important; -webkit-box-direction: initial !important; -webkit-box-flex: initial !important; -webkit-box-ordinal-group: initial !important; -webkit-box-orient: initial !important; -webkit-box-pack: initial !important; -webkit-box-reflect: initial !important; -webkit-highlight: initial !important; -webkit-line-break: initial !important; -webkit-line-clamp: initial !important; -webkit-mask-box-image: initial !important; -webkit-mask: initial !important; -webkit-mask-composite: initial !important; -webkit-print-color-adjust: initial !important; -webkit-rtl-ordering: initial !important; -webkit-ruby-position: initial !important; -webkit-tap-highlight-color: initial !important; -webkit-text-combine: initial !important; -webkit-text-decorations-in-effect: initial !important; -webkit-text-fill-color: unset !important; -webkit-text-security: initial !important; -webkit-text-stroke: initial !important; -webkit-user-drag: initial !important; -webkit-user-modify: initial !important; widows: initial !important; width: initial !important; will-change: initial !important; word-break: initial !important; word-spacing: initial !important; x: initial !important; y: initial !important; z-index: initial !important;" bis_skin_checked="1"><template shadowrootmode="open"><style>.autoprose-search-button {align-items: center; background: #000000; border-radius: 24px; border-width: 0;bottom: 2%;box-shadow: 0 0 10px rgba(0, 0, 0, 0.35); cursor: pointer; display: flex; height: 48px; line-height: 1; padding: 0 20px; position: fixed; right: 16px; z-index: 2147483643;}.autoprose-search-text {color: #FFFFFF; font-family: Google Sans, Roboto, sans-serif; font-size: 16px; margin: 10px; user-select: none;}</style><button class="autoprose-search-button"><div class="autoprose-search-icon"><svg width="18" height="18" viewBox="0 0 18 18"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.76 10.27L17.49 16L16 17.49L10.27 11.76C9.2 12.53 7.91 13 6.5 13C2.91 13 0 10.09 0 6.5C0 2.91 2.91 0 6.5 0C10.09 0 13 2.91 13 6.5C13 7.91 12.53 9.2 11.76 10.27ZM6.5 2C4.01 2 2 4.01 2 6.5C2 8.99 4.01 11 6.5 11C8.99 11 11 8.99 11 6.5C11 4.01 8.99 2 6.5 2Z" fill="#FFFFFF"></path></svg></div><div class="autoprose-search-text">検索</div></button></template></div></div><div style="color: initial !important; font: initial !important; font-palette: initial !important; font-synthesis: initial !important; forced-color-adjust: initial !important; text-orientation: initial !important; text-rendering: initial !important; -webkit-font-smoothing: initial !important; -webkit-locale: initial !important; -webkit-text-orientation: initial !important; -webkit-writing-mode: initial !important; writing-mode: initial !important; zoom: initial !important; accent-color: initial !important; place-content: initial !important; place-items: initial !important; place-self: initial !important; alignment-baseline: initial !important; animation-composition: initial !important; animation: initial !important; app-region: initial !important; appearance: initial !important; aspect-ratio: initial !important; backdrop-filter: initial !important; backface-visibility: initial !important; background: initial !important; background-blend-mode: initial !important; baseline-shift: initial !important; baseline-source: initial !important; block-size: initial !important; border-block: initial !important; border: initial !important; border-radius: initial !important; border-collapse: initial !important; border-end-end-radius: initial !important; border-end-start-radius: initial !important; border-inline: initial !important; border-start-end-radius: initial !important; border-start-start-radius: initial !important; inset: initial !important; box-shadow: initial !important; box-sizing: initial !important; break-after: initial !important; break-before: initial !important; break-inside: initial !important; buffered-rendering: initial !important; caption-side: initial !important; caret-color: initial !important; clear: initial !important; clip: initial !important; clip-path: initial !important; clip-rule: initial !important; color-interpolation: initial !important; color-interpolation-filters: initial !important; color-rendering: initial !important; color-scheme: initial !important; columns: initial !important; column-fill: initial !important; gap: initial !important; column-rule: initial !important; column-span: initial !important; contain: initial !important; contain-intrinsic-block-size: initial !important; contain-intrinsic-size: initial !important; contain-intrinsic-inline-size: initial !important; container: initial !important; content: initial !important; content-visibility: initial !important; counter-increment: initial !important; counter-reset: initial !important; counter-set: initial !important; cursor: initial !important; cx: initial !important; cy: initial !important; d: initial !important; display: initial !important; dominant-baseline: initial !important; empty-cells: initial !important; fill: initial !important; fill-opacity: initial !important; fill-rule: initial !important; filter: initial !important; flex: initial !important; flex-flow: initial !important; float: initial !important; flood-color: initial !important; flood-opacity: initial !important; grid: initial !important; grid-area: initial !important; height: initial !important; hyphenate-character: initial !important; hyphenate-limit-chars: initial !important; hyphens: initial !important; image-orientation: initial !important; image-rendering: initial !important; initial-letter: initial !important; inline-size: initial !important; inset-block: initial !important; inset-inline: initial !important; isolation: initial !important; letter-spacing: initial !important; lighting-color: initial !important; line-break: initial !important; list-style: initial !important; margin-block: initial !important; margin: initial !important; margin-inline: initial !important; marker: initial !important; mask: initial !important; mask-type: initial !important; math-depth: initial !important; math-shift: initial !important; math-style: initial !important; max-block-size: initial !important; max-height: initial !important; max-inline-size: initial !important; max-width: initial !important; min-block-size: initial !important; min-height: initial !important; min-inline-size: initial !important; min-width: initial !important; mix-blend-mode: initial !important; object-fit: initial !important; object-position: initial !important; object-view-box: initial !important; offset: initial !important; opacity: initial !important; order: initial !important; orphans: initial !important; outline: initial !important; outline-offset: initial !important; overflow-anchor: initial !important; overflow-clip-margin: initial !important; overflow-wrap: initial !important; overflow: initial !important; overscroll-behavior-block: initial !important; overscroll-behavior-inline: initial !important; overscroll-behavior: initial !important; padding-block: initial !important; padding: initial !important; padding-inline: initial !important; page: initial !important; page-orientation: initial !important; paint-order: initial !important; perspective: initial !important; perspective-origin: initial !important; pointer-events: initial !important; position: initial !important; quotes: initial !important; r: initial !important; resize: initial !important; rotate: initial !important; ruby-position: initial !important; rx: initial !important; ry: initial !important; scale: initial !important; scroll-behavior: initial !important; scroll-margin-block: initial !important; scroll-margin: initial !important; scroll-margin-inline: initial !important; scroll-padding-block: initial !important; scroll-padding: initial !important; scroll-padding-inline: initial !important; scroll-snap-align: initial !important; scroll-snap-stop: initial !important; scroll-snap-type: initial !important; scroll-timeline: initial !important; scrollbar-gutter: initial !important; shape-image-threshold: initial !important; shape-margin: initial !important; shape-outside: initial !important; shape-rendering: initial !important; size: initial !important; speak: initial !important; stop-color: initial !important; stop-opacity: initial !important; stroke: initial !important; stroke-dasharray: initial !important; stroke-dashoffset: initial !important; stroke-linecap: initial !important; stroke-linejoin: initial !important; stroke-miterlimit: initial !important; stroke-opacity: initial !important; stroke-width: initial !important; tab-size: initial !important; table-layout: initial !important; text-align: initial !important; text-align-last: initial !important; text-anchor: initial !important; text-combine-upright: initial !important; text-decoration: initial !important; text-decoration-skip-ink: initial !important; text-emphasis: initial !important; text-emphasis-position: initial !important; text-indent: initial !important; text-overflow: initial !important; text-shadow: initial !important; text-size-adjust: initial !important; text-transform: initial !important; text-underline-offset: initial !important; text-underline-position: initial !important; white-space: initial !important; touch-action: initial !important; transform: initial !important; transform-box: initial !important; transform-origin: initial !important; transform-style: initial !important; transition: initial !important; translate: initial !important; user-select: initial !important; vector-effect: initial !important; vertical-align: initial !important; view-timeline: initial !important; view-timeline-inset: initial !important; view-transition-name: initial !important; visibility: initial !important; border-spacing: initial !important; -webkit-box-align: initial !important; -webkit-box-decoration-break: initial !important; -webkit-box-direction: initial !important; -webkit-box-flex: initial !important; -webkit-box-ordinal-group: initial !important; -webkit-box-orient: initial !important; -webkit-box-pack: initial !important; -webkit-box-reflect: initial !important; -webkit-highlight: initial !important; -webkit-line-break: initial !important; -webkit-line-clamp: initial !important; -webkit-mask-box-image: initial !important; -webkit-mask: initial !important; -webkit-mask-composite: initial !important; -webkit-print-color-adjust: initial !important; -webkit-rtl-ordering: initial !important; -webkit-ruby-position: initial !important; -webkit-tap-highlight-color: initial !important; -webkit-text-combine: initial !important; -webkit-text-decorations-in-effect: initial !important; -webkit-text-fill-color: unset !important; -webkit-text-security: initial !important; -webkit-text-stroke: initial !important; -webkit-user-drag: initial !important; -webkit-user-modify: initial !important; widows: initial !important; width: initial !important; will-change: initial !important; word-break: initial !important; word-spacing: initial !important; x: initial !important; y: initial !important; z-index: initial !important;" bis_skin_checked="1"><template shadowrootmode="open"><style>#hd-drawer-container {position: fixed; left: 0; top: 0; width: 100vw; height: 100%; overflow: hidden; z-index: 2147483645; pointer-events: none;}#hd-drawer-container.hd-revealed {pointer-events: auto;}#hd-modal-background {position: absolute; left: 0; bottom: 0; background-color: black; transition: opacity .5s ease-in-out; width: 100%; height: 100%; opacity: 0;}.hd-revealed > #hd-modal-background {opacity: 0.5;}#hd-drawer {position: absolute; top: 0; height: 100%; width: min(65vw, 768px); background-color: white; display: flex; flex-direction: column; box-sizing: border-box; padding-bottom: 0px; transition: transform 0.5s ease-in-out;right: 0; border-top-left-radius: 0px; border-bottom-left-radius: 0px; transform: translateX(100%);}.hd-revealed > #hd-drawer {transform: translateY(0);}#hd-control-bar {height: 24px;}.hd-control-button {border: none; background: none; cursor: pointer;}#hd-back-arrow-button {float: left;}#hd-close-button {float: right;}#hd-content-container {flex-grow: 1; overflow: auto;}#hd-content-container::-webkit-scrollbar * {background: transparent;}.hd-hidden {visibility: hidden;}</style><div id="hd-drawer-container" class="hd-hidden" aria-modal="true" role="dialog" tabindex="0"><div id="hd-modal-background"></div><div id="hd-drawer"><div id="hd-control-bar"><button id="hd-back-arrow-button" class="hd-control-button hd-hidden" aria-label=""><svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" fill="#5F6368"><path d="m12 20-8-8 8-8 1.425 1.4-5.6 5.6H20v2H7.825l5.6 5.6Z"></path></svg></button><button id="hd-close-button" class="hd-control-button" aria-label=""><svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" fill="#5F6368"><path d="M6.4 19 5 17.6 10.6 12 5 6.4 6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4Z"></path></svg></button></div><div id="hd-content-container"><iframe></iframe></div></div></div></template></div></body><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open"><style>
+  div.grammarly-desktop-integration {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select:none;
+    user-select:none;
+  }
+
+  div.grammarly-desktop-integration:before {
+    content: attr(data-content);
+  }
+</style><div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration" data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}"></div></template></grammarly-desktop-integration><iframe id="google_esf" name="google_esf" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/zrt_lookup.html" style="display: none;"></iframe><ins class="adsbygoogle adsbygoogle-noablate" data-adsbygoogle-status="done" style="display: none !important; width: 100vw !important; height: 100vh !important; inset: 0px auto auto 0px !important; clear: none !important; float: none !important; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; padding: 0px !important; position: fixed !important; vertical-align: baseline !important; visibility: visible !important; z-index: 2147483647 !important; background: transparent !important;" aria-hidden="true" data-ad-status="filled" data-vignette-loaded="true"><div id="aswift_6_host" tabindex="0" title="Advertisement" aria-label="Advertisement" bis_skin_checked="1" style="border: none !important; height: 100vh !important; width: 100vw !important; margin: 0px !important; padding: 0px !important; position: relative !important; visibility: visible !important; background-color: transparent !important; display: inline-block !important; inset: auto !important; clear: none !important; float: none !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; vertical-align: baseline !important; z-index: auto !important;"><iframe id="aswift_6" name="aswift_6" style="width: 100vw !important; height: 100vh !important; inset: 0px auto auto 0px !important; position: absolute !important; clear: none !important; display: inline !important; float: none !important; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; padding: 0px !important; vertical-align: baseline !important; visibility: visible !important; z-index: auto !important;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="" height="" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./Linuxコマンド【 tr 】文字の変換や削除 - Linux入門 - Webkaru_files/zrt_lookup(1).html" data-google-container-id="a!7" data-google-query-id="CPTP5Nn8xoADFYbLfAod5L8AZQ" data-load-complete="true"></iframe></div></ins></html>

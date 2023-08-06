@@ -1,0 +1,389 @@
+@import url('https://fonts.googleapis.com/css?family=Inconsolata:400,700&display=swap');
+
+body {
+  font-size: 1.1em;
+  padding-top: 75px;
+}
+
+img {
+  max-width: 100%;
+}
+
+.breadcrumb {
+  margin-left: -1em;
+  font-size: 0.8em;
+}
+.breadcrumb a {
+  color: #525252;
+}
+
+/* main article */
+main pre.command {
+  color: white;
+  font-family: 'Inconsolata', monospace;
+  background: rgba(45,45,45,0.8);
+  padding: 10px;
+  font-size: 16px;
+}
+
+main h1, main h2, main h3 {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  font-weight: bold;
+}
+
+main h1 {
+  font-size: 34px;
+}
+
+main h2 {
+  font-size: 26px;
+}
+
+main h3 {
+  font-size: 20px;
+  border-bottom: 1px solid #ececec;
+  padding-bottom: 5px;
+}
+
+main h2 span.code, main h3 span.code {
+  font-size: 24px;
+  background: inherit;
+}
+
+main>h2 {
+  background: #f0f0f0;
+  padding: 5px 10px;
+}
+
+main strong {
+  font-weight: bold;
+  background: linear-gradient( transparent 60%, #ff6 60%);
+  text-shadow: 1px 1px 0px #fff;
+}
+
+pre.command strong {
+  background: inherit;
+  text-shadow: inherit;
+}
+
+/* table */
+table.t1, table.type1 {
+  margin-right: auto;
+  margin-left: auto;
+  margin-bottom: 1em;
+}
+
+table.t1 thead tr, table.type1 thead tr {
+  background-color: #13668e;
+  color: #fff;
+  font-weight: normal;
+}
+
+table.t1 td, table.t1 th, table.type1 td, table.type1 th {
+  padding: 2px 5px;
+  border: 1px solid #333;
+}
+.tag-table tr td:first-child a,
+.tag-table tr td:first-child {
+  font-family: 'Inconsolata', monospace;
+}
+
+fieldset.f1 {
+  border: double 3px #000;
+  padding: 0.5em 1em;
+}
+
+fieldset.f1 legend {
+  padding: 0px 10px;
+  margin: 0px;
+}
+
+/* menu */
+div.menu ul li {
+  line-height: 1.6em;
+
+}
+
+div.menu a {
+  display: block;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+div.menu a:hover {
+  color: rgba(0, 0, 0, 1.0);
+  text-decoration: none;
+}
+
+div.menu h3 {
+  color: rgba(0, 0, 0, 0.65);
+  margin-top: 20px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* FontAwesome note / coffee */
+div.note {
+  border-width: 0px;
+  background-color: #d7f5ff;
+  border-radius: 5px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  line-height: 1.2rem;
+}
+
+div.note>h4 {
+  color: #13668e;
+  font-size: 18px;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+div.note>p {
+  font-size: 0.9em;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 0px;
+}
+
+div.note p:first-child::before,
+div.coffee p:first-child::before {
+  display: inline-block;
+  margin-right: 0.5em;
+  content: '\f05a';
+  font-family: 'FontAwesome'
+}
+
+div.coffee p:first-child::before {
+  content: '\f0f4';
+}
+
+/* UL */
+ul.idx {
+  line-height: 1.8em;
+  list-style-image: url('../img/bb-1.png');
+}
+
+ul.idx2 {
+  margin: 8px 0px 8px 0px;
+  line-height: 1.8rem;
+  list-style-image: url('../img/bb-2.png');
+}
+
+span.code, span.command, span.option, span.key, span.eclipse, span.menu, span.menu-button {
+  display: inline-block;
+  font-family: 'Inconsolata', monospace;
+  color: #000;
+  background: #f0f0f0;
+  padding: 2px 5px;
+}
+
+strong>span.code {
+  background: transparent;
+  font-weight: bold;
+}
+
+span.param {
+  color: #ef6c00;
+  font-style: italic;
+}
+
+span.command {
+  background: #b2ebf2;
+}
+
+span.option {
+  background: #f0f4c3;
+}
+
+span.key {
+  border-radius: 3px;
+  border-style: double;
+  border-color: #999;
+  font-size: 0.9em;
+  padding: 2px 5px;
+  line-height: 1.4em;
+}
+
+span.menu, span.menu-button {
+  border-width: 1px;
+  border-radius: 3px;
+  border-style: solid;
+  border-color: #999;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 2px 5px;
+  line-height: 1.2em;
+}
+
+span.menu-button {
+  background-color: #447bd4;
+  color: #fff;
+}
+
+/* TOC */
+.toc {
+  background-color: #f8f9fa;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: block;
+  border: 1px solid #dddddd;
+  padding: 1rem;
+  font-size: 1rem;
+}
+
+.toc .toc-title {
+  text-align: center;
+  padding: 8px;
+  font-weight: bold;
+}
+
+.toc li {
+  margin-bottom: 8px;
+}
+
+.toc li ol {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+div.lcol {
+  padding-left: 2.5em;
+}
+
+div.rcol {
+  border-left: 1px solid #e0e0e0;
+  background: white;
+}
+
+/* List */
+.midashi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.midashi img {
+  max-width: 120px;
+  border-radius: 5px;
+}
+.midashi a {
+  color: #252525;
+  transition: color 0.3s;
+  font-weight: bold;
+}
+.midashi a:hover {
+  text-decoration: none;
+  color: orange;
+}
+.midashi-exp {
+  display: flex;
+  flex-direction: column;
+}
+.midashi-exp-body {
+  color: #252525;
+  font-size: 0.9em;
+}
+.midashi-title {
+  color: rgb(56,126,147);
+  background-color: inherit;
+  border-bottom: 3px solid rgb(56,126,147);
+  padding-left: 0;
+  font-size: 18pt;
+}
+
+main .closing {
+  margin-top: 3em;
+  margin-bottom: 3em;
+}
+
+.fname {
+  color: #555;
+  background: #e0e0e0;
+  font-family: 'Inconsolata', monospace;
+  margin-top: -10px;
+  margin-bottom: 1em;
+  padding-left: 1em;
+  border: 1px solid rgba(45, 45, 45, 0.452);
+  border-top-width: 0;
+}
+
+/* gazo-list */
+.gazo-list {
+  display: flex;
+  align-items:flex-start;
+}
+
+.gazo-list-image img {
+  object-fit: none;
+  object-position: center;
+  height: 200px;
+  max-width: 200px;
+  width: 200px;
+  transition-property: 'opacity';
+  transition-duration: 0.3s;
+}
+
+.gazo-list-image img:hover {
+  opacity: 0.4;
+}
+
+.gazo-list-list {
+  margin-left: 0;
+  padding-left: 10px;
+}
+
+.gazo-list-list h3 {
+  border-width: 0;
+  margin-bottom: 0;
+}
+.gazo-list-list h3 a {
+  color: #333;
+}
+.gazo-list-list ul {
+  padding-left: 1.5em;
+}
+
+pre.prettyprint,
+main pre.code {
+  font-family: 'Inconsolata', monospace;
+  box-sizing: border-box;
+  padding: 10px !important;
+  border-width: 0px;
+  background-color: #eff0f1;
+  max-width: 100%;
+  line-height: 1.15rem;
+}
+
+@media(max-width:992px){
+  div.menu ul {
+    list-style: none;
+    padding-left: 0.5em;
+  }
+  div.menu ul li {
+    line-height: 48px;
+    border-bottom: 1px solid rgba(0,0,0,0.4);
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+}
+
+@media(max-width: 768px) {
+  div.lcol {
+    padding-left: 1em;
+  }
+  div.rcol {
+    border-left: 0px solid #e0e0e0;
+  }
+  ul.idx {
+    margin-left: 0;
+    padding-left: 1em;
+  }
+  ul.idx2 {
+    margin-left: 0;
+    padding-left: 1.2em;
+  }
+  .toc ol, .toc ul {
+    padding-left: 0.8em;
+  }
+}
