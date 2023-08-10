@@ -1,0 +1,2 @@
+find a character in flags table
+https://en.wikipedia.org/wiki/International_maritime_signal_flags

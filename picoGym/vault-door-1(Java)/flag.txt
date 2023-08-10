@@ -1,0 +1,3 @@
+apt install nkf
+
+cat VaultDoor1.java |grep charAt VaultDoor1.java | cut -d"(" -f 2 | sort -n | cut -d"'" -f 2 | sed -z "s/\n//g"

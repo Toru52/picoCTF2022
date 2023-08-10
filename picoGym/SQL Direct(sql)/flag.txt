@@ -1,0 +1,7 @@
+sudo apt-get install postgresql-client
+↓
+psql -h saturn.picoctf.net -p 63216 -U postgres pico
+↓
+select * from pg_tables;
+↓
+select * from flags;

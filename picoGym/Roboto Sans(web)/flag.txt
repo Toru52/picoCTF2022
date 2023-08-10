@@ -1,0 +1,8 @@
+http://saturn.picoctf.net:63195/robots.txt
+↓
+anMvbXlmaWxlLnR4dA==
+↓　base64
+flag1.txtjs/myfif§2ö×fÆRçG@
+/²Ë! ®	h²÷Z²W£
+↓
+http://saturn.picoctf.net:63195/js/myfile.txt

@@ -1,0 +1,9 @@
+1:view-source:http://mercury.picoctf.net:27393/
+
+2:http://mercury.picoctf.net:27393/mycss.css
+
+3:http://mercury.picoctf.net:27393/robots.txt
+
+4:http://mercury.picoctf.net:27393/.htaccess
+
+5:http://mercury.picoctf.net:27393/.DS_Store

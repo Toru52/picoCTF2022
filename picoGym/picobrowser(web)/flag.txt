@@ -1,0 +1,1 @@
+curl --user-agent "picobrowser" "https://jupiter.challenges.picoctf.org/problem/50522/flag"

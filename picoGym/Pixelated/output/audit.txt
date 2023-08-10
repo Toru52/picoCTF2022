@@ -1,0 +1,23 @@
+Foremost version 1.5.7 by Jesse Kornblum, Kris Kendall, and Nick Mikus
+Audit File
+
+Foremost started at Thu Aug 10 19:23:55 2023
+Invocation: foremost scrambled2.png 
+Output directory: /home/toru/picoCTF2022/picoGym/Pixelated/output
+Configuration file: /etc/foremost.conf
+------------------------------------------------------------------
+File: scrambled2.png
+Start: Thu Aug 10 19:23:55 2023
+Length: 192 KB (197173 bytes)
+ 
+Num	 Name (bs=512)	       Size	 File Offset	 Comment 
+
+0:	00000000.png 	     192 KB 	          0 	  (256 x 256)
+Finish: Thu Aug 10 19:23:55 2023
+
+1 FILES EXTRACTED
+	
+png:= 1
+------------------------------------------------------------------
+
+Foremost finished at Thu Aug 10 19:23:55 2023
