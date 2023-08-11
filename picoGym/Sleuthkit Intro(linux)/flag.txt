@@ -1,0 +1,1 @@
+Find the length by using command "mmls disk.img"

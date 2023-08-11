@@ -1,0 +1,38 @@
+ sudo apt install sharutils
+ ↓
+ sh Flag.pdf 　　→generate a flag
+ ↓
+ ar -x flag
+ ↓
+ cp flag flag.cpio
+ ↓
+ cpio --file flag.cpio --extract→generate a flag
+ ↓
+ bunzip2 flag　　　→generate a flag.out
+ ↓
+ mv flag.out flag.gz
+ ↓
+ gunzip flag.gz　　　→generate a flag.out
+ ↓
+ lz4 -d flag.out flag　　　→generate a flag
+ ↓
+ mv flag flag.lzma
+ ↓
+ unlzma flag.lzma   →generate a flag
+ ↓
+ mv flag flag.lzop
+ ↓
+ lzop -x flag.lzop   →generate a flag
+ ↓
+ rm flag.out 
+ ↓
+ lzip -d flag   →generate a flag.out
+ ↓
+ mv flag.out flag.xz
+ ↓
+ unxz flag.xz   →generate a flag
+ ↓
+ cat flag
+ ↓
+ convert from hex to ascii
+ 

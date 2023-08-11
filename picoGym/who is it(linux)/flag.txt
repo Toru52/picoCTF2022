@@ -1,0 +1,7 @@
+ strings  email-export.eml
+↓
+find an ip
+↓
+whois "ip"
+↓
+Wilhelm Zwalina
