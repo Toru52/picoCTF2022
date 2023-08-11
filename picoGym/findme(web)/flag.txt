@@ -1,0 +1,8 @@
+curl -i http://saturn.picoctf.net:60272/login -d "username=test" -d "password=test!"
+↓
+curl -i http://saturn.picoctf.net:60272/next-page/id=cGljb0NURntwcm94aWVzX2Fs
+↓
+get two id
+id=cGljb0NURntwcm94aWVzX2Fs
+id=id=bF90aGVfd2F5X2EwZmUwNzRmfQ==
+↓base64

